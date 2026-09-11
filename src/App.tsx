@@ -1,5 +1,26 @@
+import { localizeDemoText, isDefaultSemester } from './demoText';
+import {
+  courseOccurrence,
+  occurrenceIsPast,
+  recentCourses,
+} from './occurrences';
+import { useNow } from './useNow';
+import { MascotCard } from './MascotCard';
+import { ComingUp } from './ComingUp';
+import { WeekJourney } from './WeekJourney';
+import {
+  DISPLAY_KEY,
+  parseDisplayPreferences,
+  type DisplayPreferences,
+} from './displayPreferences';
 import { useI18n } from './LocaleProvider';
-import { createTranslator, LOCALES, LOCALE_NAMES, type Locale } from './i18n';
+import {
+  createTranslator,
+  LOCALES,
+  LOCALE_NAMES,
+  type Locale,
+  type Translator,
+} from './i18n';
 import {
   useEffect,
   useMemo,
@@ -16,7 +37,6 @@ import {
   CalendarDays,
   Check,
   CheckCircle2,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Clock3,
@@ -24,8 +44,6 @@ import {
   FileSpreadsheet,
   GraduationCap,
   HelpCircle,
-  LayoutGrid,
-  List,
   LoaderCircle,
   MapPin,
   Menu,
@@ -45,8 +63,16 @@ import {
 import {
   COLORS,
   DEFAULT_SETTINGS,
+  MAX_PERIODS,
+  courseOccursInWeek,
   SAMPLE_COURSES,
   conflicts,
+  unresolvedConflicts,
+  parseCourseTiming,
+  courseClock,
+  compareCourses,
+  isPeriodCourse,
+  type PeriodCourse,
   currentWeek,
   dateAtWeek,
   decodeSaved,
@@ -64,13 +90,35 @@ import { useTheme } from './useTheme';
 
 const STORAGE_KEY = 'moving-on-schedule.v1';
 const COLOR_NAMES = [
-  '鼠尾草绿',
-  '杏桃色',
-  '淡紫色',
-  '晴空蓝',
-  '奶油黄',
-  '玫瑰粉',
+  'color.sage',
+  'color.peach',
+  'color.lavender',
+  'color.blue',
+  'color.yellow',
+  'color.rose',
 ];
+function courseTimingLabel(course: Course, t: Translator): string {
+  if (course.timing === 'time') return `${course.start}–${course.end}`;
+  return course.start === course.end
+    ? t('ui.period', { 0: course.start })
+    : t('course.periodRange', { 0: course.start, 1: course.end });
+}
+function courseTimeLabel(
+  course: Course,
+  settings: Settings,
+  t: Translator,
+  separator = ' · ',
+): string {
+  if (course.timing === 'time') return courseTimingLabel(course, t);
+  const { start, end } = courseClock(course, settings);
+  const periods = courseTimingLabel(course, t);
+  if (start && end) return `${start}–${end}${separator}${periods}`;
+  if (start)
+    return `${t('time.startsAt', { 0: start })}${separator}${periods}${separator}${t('time.incomplete')}`;
+  if (end)
+    return `${t('time.endsAt', { 0: end })}${separator}${periods}${separator}${t('time.incomplete')}`;
+  return `${periods}${separator}${t('time.notSet')}`;
+}
 function loadData(): { data: SavedData; error: string } {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -83,8 +131,7 @@ function loadData(): { data: SavedData; error: string } {
         settings: DEFAULT_SETTINGS,
         isDemo: false,
       },
-      error:
-        '无法读取本地课表，原始数据未被覆盖。请先备份浏览器数据，再进行修改。',
+      error: 'ui.couldNotReadTheLocalTimetableTheOriginalData',
     };
   }
   return {
@@ -163,13 +210,12 @@ function Modal({
       >
         <div className="modal-heading">
           <div>
-            <span className="eyebrow">MOVING-ON SCHEDULE</span>
             <h2 id="modal-title">{title}</h2>
             {subtitle && <p>{subtitle}</p>}
           </div>
           <button
             className="icon-button"
-            aria-label={t('关闭弹窗')}
+            aria-label={t('dialog.close')}
             onClick={onClose}
           >
             <X size={20} />
@@ -181,6 +227,7 @@ function Modal({
   );
 }
 function CourseForm({
+  settings,
   course,
   day,
   totalWeeks,
@@ -189,6 +236,7 @@ function CourseForm({
   onDelete,
   onClose,
 }: {
+  settings: Settings;
   course?: Course;
   day?: number;
   totalWeeks: number;
@@ -206,11 +254,15 @@ function CourseForm({
       room: '',
       day: day || 1,
       start: 1,
-      end: 2,
+      end: Math.min(2, settings.periods.length),
       weeks: [],
       color: 'blue',
       note: '',
     },
+  );
+  const [startInput, setStartInput] = useState(String(course?.start ?? 1));
+  const [endInput, setEndInput] = useState(
+    String(course?.end ?? Math.min(2, settings.periods.length)),
   );
   const [weeks, setWeeks] = useState(
     course ? formatWeeks(course.weeks) : `1-${totalWeeks}`,
@@ -221,11 +273,20 @@ function CourseForm({
   const update = (key: keyof Course, value: unknown) =>
     setDraft({ ...draft, [key]: value });
   let collision: Course[] = [];
+  let uncertain: Course[] = [];
   try {
-    collision = conflicts(
-      { ...draft, weeks: parseWeeks(weeks, totalWeeks, locale) },
-      courses,
-    );
+    const candidate = {
+      ...draft,
+      ...parseCourseTiming(
+        startInput,
+        endInput,
+        locale,
+        settings.periods.length,
+      ),
+      weeks: parseWeeks(weeks, totalWeeks, locale),
+    };
+    collision = conflicts(candidate, courses, settings);
+    uncertain = unresolvedConflicts(candidate, courses, settings);
   } catch {
     /* Inline validation appears on submit. */
   }
@@ -234,49 +295,59 @@ function CourseForm({
     try {
       const next = {
         ...draft,
+        ...parseCourseTiming(
+          startInput,
+          endInput,
+          locale,
+          settings.periods.length,
+        ),
         name: draft.name.trim(),
         room: draft.room.trim(),
         teacher: draft.teacher.trim(),
         weeks: parseWeeks(weeks, totalWeeks, locale),
       };
-      validateCourse(next, totalWeeks, locale);
+      validateCourse(next, totalWeeks, locale, settings.periods.length);
       onSave(next);
     } catch (error) {
-      setError(error instanceof Error ? error.message : t('请检查课程信息'));
+      setError(
+        error instanceof Error
+          ? error.message
+          : t('ui.pleaseCheckTheCourseDetails'),
+      );
     }
   }
   return (
     <Modal
-      title={isEditing ? t('编辑课程') : t('添加一门课程')}
-      subtitle={t('叮！把课程安排收进小本本。')}
+      title={isEditing ? t('course.edit') : t('course.add')}
+
       onClose={onClose}
     >
       <form onSubmit={submit} className="course-form" noValidate>
         <label>
-          <span>{t('课程名称 *')}</span>
+          <span>{t('ui.courseName')}</span>
           <input
             required
             maxLength={100}
-            placeholder={t('例如：设计思维与创新')}
+            placeholder={t('ui.eGDesignThinking')}
             value={draft.name}
             onChange={(e) => update('name', e.target.value)}
           />
         </label>
         <div className="form-grid">
           <label>
-            {t('上课地点')}
+            {t('ui.location')}
             <input
               maxLength={100}
-              placeholder={t('教学楼 / 教室 / 线上会议')}
+              placeholder={t('ui.buildingRoomOnlineMeeting')}
               value={draft.room}
               onChange={(e) => update('room', e.target.value)}
             />
           </label>
           <label>
-            {t('授课教师')}
+            {t('ui.teacher')}
             <input
               maxLength={100}
-              placeholder={t('教师姓名（选填）')}
+              placeholder={t('ui.teacherNameOptional')}
               value={draft.teacher}
               onChange={(e) => update('teacher', e.target.value)}
             />
@@ -284,7 +355,7 @@ function CourseForm({
         </div>
         <div className="form-grid thirds">
           <label>
-            {t('星期')}
+            {t('ui.day')}
             <select
               value={draft.day}
               onChange={(e) => update('day', Number(e.target.value))}
@@ -297,50 +368,41 @@ function CourseForm({
             </select>
           </label>
           <label>
-            {t('开始节次')}
-            <select
-              value={draft.start}
-              onChange={(e) =>
-                setDraft({
-                  ...draft,
-                  start: Number(e.target.value),
-                  end: Math.max(draft.end, Number(e.target.value)),
-                })
-              }
-            >
-              {Array.from({ length: 12 }, (_, i) => (
-                <option key={i} value={i + 1}>
-                  {t('第 {0} 节', { 0: i + 1 })}
-                </option>
-              ))}
-            </select>
+            {t('timing.start')}
+            <input
+              value={startInput}
+              onChange={(e) => setStartInput(e.target.value)}
+              placeholder="1 / 08:00"
+              aria-describedby="timing-help"
+              required
+            />
           </label>
           <label>
-            {t('结束节次')}
-            <select
-              value={draft.end}
-              onChange={(e) => update('end', Number(e.target.value))}
-            >
-              {Array.from({ length: 12 }, (_, i) => (
-                <option disabled={i + 1 < draft.start} key={i} value={i + 1}>
-                  {t('第 {0} 节', { 0: i + 1 })}
-                </option>
-              ))}
-            </select>
+            {t('timing.end')}
+            <input
+              value={endInput}
+              onChange={(e) => setEndInput(e.target.value)}
+              placeholder="2 / 09:40"
+              aria-describedby="timing-help"
+              required
+            />
           </label>
         </div>
+        <p className="timing-help" id="timing-help">
+          {t('timing.help', { 0: settings.periods.length })}
+        </p>
         <label>
-          <span>{t('上课周次 *')}</span>
+          <span>{t('ui.teachingWeeks')}</span>
           <input
             required
             value={weeks}
             onChange={(e) => setWeeks(e.target.value)}
-            placeholder={t('1-16 / 1,3,5 / 1-16(单)')}
+            placeholder={t('ui.116135116Odd')}
           />
-          <small>{t('支持连续周、指定周和单双周，例如 1-16(单)。')}</small>
+          <small>{t('ui.useRangesSelectedWeeksOrOddEvenWeeksE')}</small>
         </label>
         <fieldset className="color-field">
-          <legend>{t('课程颜色')}</legend>
+          <legend>{t('ui.courseColor')}</legend>
           <div className="color-options">
             {COLORS.map((color, i) => (
               <button
@@ -357,23 +419,26 @@ function CourseForm({
           </div>
         </fieldset>
         <label>
-          {t('备注')}
+          {t('course.remark')}
           <textarea
             maxLength={500}
             rows={2}
-            placeholder={t('教材、课程链接，或给自己的小提醒…')}
+            placeholder={t('course.remarkPlaceholder')}
             value={draft.note}
             onChange={(e) => update('note', e.target.value)}
           />
         </label>
         {collision.length > 0 && (
           <div className="notice warning">
-            {t('与「{0} 」存在时间重叠。保存后会并排展示，请确认安排。', {
+            {t('course.overlaps', {
               0: collision
                 .map((c) => c.name)
                 .join(locale === 'en' ? ', ' : '、'),
             })}
           </div>
+        )}
+        {uncertain.length > 0 && (
+          <p className="notice warning">{t('timing.unknownOverlap')}</p>
         )}
         {error && (
           <p className="notice error" role="alert">
@@ -391,16 +456,18 @@ function CourseForm({
               }}
             >
               <Trash2 size={16} />
-              {confirmDelete ? t('确认删除此课程') : t('删除课程')}
+              {confirmDelete ? t('ui.confirmDeletion') : t('ui.deleteCourse')}
             </button>
           )}
-          <div className="action-spacer" />
+          <span className="settings-storage">
+            {t('ui.savedInThisBrowserOnly')}
+          </span>
           <button className="button secondary" type="button" onClick={onClose}>
-            {t('取消')}
+            {t('ui.cancel')}
           </button>
           <button className="button primary" type="submit">
             <Check size={16} />
-            {isEditing ? t('保存修改') : t('添加课程')}
+            {isEditing ? t('ui.saveChanges') : t('course.add')}
           </button>
         </div>
       </form>
@@ -408,6 +475,7 @@ function CourseForm({
   );
 }
 function ImportModal({
+  settings,
   totalWeeks,
   isDemo,
   existing,
@@ -417,6 +485,7 @@ function ImportModal({
 }: {
   totalWeeks: number;
   isDemo: boolean;
+  settings: Settings;
   existing: Course[];
   onApply: (courses: Course[], replace: boolean) => void;
   onClose: () => void;
@@ -446,14 +515,19 @@ function ImportModal({
     setFileName(file.name);
     try {
       const importer = await import('./importer');
-      const parsed = await importer.readImport(file, totalWeeks, locale);
+      const parsed = await importer.readImport(
+        file,
+        totalWeeks,
+        locale,
+        settings.periods.length,
+      );
       if (token === generation.current) setResult(parsed);
     } catch (error) {
       if (token === generation.current)
         setError(
           error instanceof Error
             ? error.message
-            : t('文件读取失败，请检查 Excel 文件格式'),
+            : t('ui.couldNotReadTheFilePleaseCheckItsExcel'),
         );
     } finally {
       if (token === generation.current) setBusy(false);
@@ -462,35 +536,46 @@ function ImportModal({
   const overlap =
     result?.courses.filter(
       (c, i) =>
-        conflicts(c, [
-          ...(replace ? [] : existing),
-          ...result.courses.slice(0, i),
-        ]).length,
+        conflicts(
+          c,
+          [...(replace ? [] : existing), ...result.courses.slice(0, i)],
+          settings,
+        ).length,
     ).length || 0;
+  const unknownOverlap = result?.courses.some(
+    (course, i) =>
+      unresolvedConflicts(
+        course,
+        [...(replace ? [] : existing), ...result.courses.slice(0, i)],
+        settings,
+      ).length,
+  );
   async function template() {
     try {
-      await (await import('./importer')).downloadWorkbook(undefined, locale);
-      notify(t('Excel 模板已下载'));
+      await (
+        await import('./importer')
+      ).downloadWorkbook(undefined, locale, settings.periods.length);
+      notify(t('ui.excelTemplateDownloaded'));
     } catch {
-      setError(t('模板下载失败，请重试'));
+      setError(t('ui.couldNotDownloadTheTemplatePleaseTryAgain'));
     }
   }
   return (
     <Modal
-      title={t('导入你的课程表')}
-      subtitle={t('把课程装进行囊，新学期准备出发！')}
+      title={t('ui.importTimetable')}
+
       onClose={onClose}
       wide
     >
       <div className="import-steps">
         <span className={!result ? 'active' : 'done'}>
           <b>{result ? <Check size={12} /> : 1}</b>
-          {t('选择文件')}
+          {t('ui.chooseFile')}
         </span>
         <i />
         <span className={result ? 'active' : ''}>
           <b>2</b>
-          {t('预览并导入')}
+          {t('ui.previewImport')}
         </span>
       </div>
       <input
@@ -498,7 +583,7 @@ function ImportModal({
         hidden
         type="file"
         accept=".xlsx,.csv"
-        aria-label={t('选择课程表文件')}
+        aria-label={t('ui.chooseTimetableFile')}
         onChange={(e) => {
           void select(e.target.files?.[0]);
           e.target.value = '';
@@ -526,44 +611,45 @@ function ImportModal({
           <FileSpreadsheet size={32} />
         )}
         <strong>
-          {busy ? t('正在读取课表…') : fileName || t('将 Excel 文件拖到这里')}
+          {busy
+            ? t('ui.readingYourTimetable')
+            : fileName || t('ui.dropYourExcelFileHere')}
         </strong>
         <span>
-          {fileName ? t('点击重新选择文件') : t('或点击选择文件')}{' '}
+          {fileName
+            ? t('ui.clickToChooseAnotherFile')
+            : t('ui.orClickToChooseAFile')}{' '}
           <ArrowUpRight size={13} />
         </span>
-        <small>{t('支持 .xlsx、UTF-8 .csv · 最大 10 MB')}</small>
+        <small>{t('ui.xlsxOrUtf8CsvUpTo10Mb')}</small>
       </button>
       <div className="template-row">
         <div>
-          <strong>{t('还没有合适的表格？')}</strong>
-          <p>{t('下载模板，填写课程信息后再导入。')}</p>
+          <strong>{t('import.template')}</strong>
+          <p>{t('import.templateHelp')}</p>
         </div>
         <button className="text-button" onClick={template}>
           <ArrowDownToLine size={16} />
-          {t('下载 Excel 模板')}
+          {t('ui.downloadExcelTemplate')}
         </button>
       </div>
       <details className="format-help">
-        <summary>{t('查看格式说明')}</summary>
+        <summary>{t('ui.viewFormatGuide')}</summary>
         <p>
-          {t(
-            '第一行是表头： {0} 为必需列；教室、教师、备注为选填。每行是一段上课安排，同一课程多个时间请分行填写。读取第一个非空工作表，导入前会展示工作表名称。',
-            {
-              0: (locale === 'en'
-                ? ['name', 'day', 'start', 'end', 'weeks']
-                : ['课程名称', '星期', '开始节次', '结束节次', '周次'].map(
-                    (tKey) => t(tKey),
-                  )
-              ).join(locale === 'en' ? ', ' : '、'),
-            },
-          )}
+          {t('import.headerHelp', {
+            0: (locale === 'en'
+              ? ['name', 'day', 'start', 'end', 'weeks']
+              : [
+                  'course.name',
+                  'ui.day',
+                  'ui.firstPeriod',
+                  'ui.lastPeriod',
+                  'ui.weeks',
+                ].map((tKey) => t(tKey))
+            ).join(locale === 'en' ? ', ' : '、'),
+          })}
         </p>
-        <p>
-          {t(
-            '星期：周一至周日或 1–7；节次：1–12；周次：1-16、1,3,5 或 1-16(单)。旧版 .xls 请先另存为 .xlsx。暂不识别合并单元格的周视图课表。',
-          )}
-        </p>
+        <p>{t('ui.daysMonSunOr17Periods112')}</p>
       </details>
       {error && (
         <div className="notice error" role="alert">
@@ -574,10 +660,10 @@ function ImportModal({
         <div className="import-preview">
           <div className="preview-heading">
             <strong>
-              {t('识别到 {0} 条课程', { 0: result.courses.length })}
+              {t('ui.courseMeetingsFound', { 0: result.courses.length })}
             </strong>
             <small>
-              {t('工作表：{0} · 共 {1} 行', {
+              {t('ui.sheetRows', {
                 0: result.sheet,
                 1: result.rows,
               })}
@@ -586,7 +672,7 @@ function ImportModal({
           {result.errors.length > 0 && (
             <div className="notice error" role="alert">
               <strong>
-                {t('请修正以下问题后重新上传，当前文件尚未导入。')}
+                {t('ui.fixTheseIssuesAndUploadAgainNothingHasBeen')}
               </strong>
               <ul>
                 {result.errors.slice(0, 12).map((e) => (
@@ -595,19 +681,22 @@ function ImportModal({
               </ul>
               {result.errors.length > 12 && (
                 <span>
-                  {t('另有 {0} 处错误。', { 0: result.errors.length - 12 })}
+                  {t('ui.additionalIssues', { 0: result.errors.length - 12 })}
                 </span>
               )}
             </div>
+          )}
+          {unknownOverlap && (
+            <p className="notice warning">{t('timing.unknownOverlap')}</p>
           )}
           <div className="preview-table">
             <table>
               <thead>
                 <tr>
-                  <th>{t('课程名称')}</th>
-                  <th>{t('时间')}</th>
-                  <th>{t('周次')}</th>
-                  <th>{t('教室')}</th>
+                  <th>{t('course.name')}</th>
+                  <th>{t('ui.time')}</th>
+                  <th>{t('ui.weeks')}</th>
+                  <th>{t('ui.room')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -615,11 +704,7 @@ function ImportModal({
                   <tr key={c.id}>
                     <td>{c.name}</td>
                     <td>
-                      {t('{0} · {1}–{2} 节', {
-                        0: DAYS[c.day - 1],
-                        1: c.start,
-                        2: c.end,
-                      })}
+                      {DAYS[c.day - 1]} · {courseTimingLabel(c, t)}
                     </td>
                     <td>{formatWeeks(c.weeks)}</td>
                     <td>{c.room || '—'}</td>
@@ -630,7 +715,7 @@ function ImportModal({
           </div>
           {result.courses.length > 50 && (
             <small>
-              {t('仅预览前 50 条，确认后导入全部 {0} 条。', {
+              {t('ui.showingTheFirst50MeetingsConfirmToImportAll', {
                 0: result.courses.length,
               })}
             </small>
@@ -641,16 +726,18 @@ function ImportModal({
               checked={replace}
               onChange={(e) => setReplace(e.target.checked)}
             />
-            {isDemo ? t('替换示例课表') : t('替换当前全部课程')}
+            {isDemo
+              ? t('ui.replaceSampleTimetable')
+              : t('ui.replaceAllCurrentCourses')}
             <small>
               {replace
-                ? t('将移除现有 {0} 条安排', { 0: existing.length })
-                : t('课程将追加到现有课表')}
+                ? t('ui.currentMeetingsToBeRemoved', { 0: existing.length })
+                : t('ui.coursesWillBeAddedToYourTimetable')}
             </small>
           </label>
           {overlap > 0 && (
             <div className="notice warning">
-              {t('有 {0} 条课程与其他安排重叠，导入后会并排展示。', {
+              {t('ui.overlappingMeetingsTheyWillAppearSideBySideAfter', {
                 0: overlap,
               })}
             </div>
@@ -660,11 +747,11 @@ function ImportModal({
       <div className="modal-actions">
         <span className="privacy-note">
           <ShieldCheck size={14} />
-          {t('文件仅在本机处理')}
+          {t('ui.filesStayOnThisDevice')}
         </span>
         <div className="action-spacer" />
         <button className="button secondary" onClick={onClose}>
-          {t('取消')}
+          {t('ui.cancel')}
         </button>
         <button
           className="button primary"
@@ -678,8 +765,8 @@ function ImportModal({
         >
           <Check size={16} />
           {result
-            ? t('确认导入 {0} 条', { 0: result.courses.length })
-            : t('确认导入')}
+            ? t('ui.importMeetings', { 0: result.courses.length })
+            : t('ui.importCourses')}
         </button>
       </div>
     </Modal>
@@ -699,32 +786,62 @@ function SettingsModal({
   const { t, locale } = useI18n();
   const [draft, setDraft] = useState<Settings>({
       ...structuredClone(settings),
-      semester:
-        settings.semester === DEFAULT_SETTINGS.semester
-          ? t(settings.semester)
-          : settings.semester,
+      semester: isDefaultSemester(settings.semester)
+        ? t('demo.semester')
+        : settings.semester,
     }),
     [error, setError] = useState('');
+  const [periodCount, setPeriodCount] = useState(
+    String(settings.periods.length),
+  );
+  const count = Number(periodCount);
+  const validCount =
+    Number.isInteger(count) && count >= 1 && count <= MAX_PERIODS;
+  const visiblePeriods = Array.from(
+    { length: validCount ? count : draft.periods.length },
+    (_, i) => draft.periods[i] ?? { start: '', end: '' },
+  );
+  function setPeriodTime(index: number, field: 'start' | 'end', value: string) {
+    setDraft((current) => {
+      const periods = Array.from(
+        { length: Math.max(current.periods.length, visiblePeriods.length) },
+        (_, i) => current.periods[i] ?? { start: '', end: '' },
+      );
+      periods[index] = { ...periods[index], [field]: value };
+      return { ...current, periods };
+    });
+  }
   function submit(e: FormEvent) {
     e.preventDefault();
     try {
-      validateSettings(draft, locale);
+      if (!validCount)
+        throw new Error(t('settings.invalidPeriodCount', { 0: MAX_PERIODS }));
+      const next = { ...draft, periods: visiblePeriods };
+      validateSettings(next, locale);
+      if (courses.some((c) => isPeriodCourse(c) && c.end > count))
+        throw new Error(t('settings.periodsInUse', { 0: count }));
       if (courses.some((c) => c.weeks.some((w) => w > draft.totalWeeks)))
-        throw new Error(t('现有课程超出了新学期长度，请先调整课程周次'));
-      onSave(draft);
+        throw new Error(
+          t('ui.someCoursesExceedTheNewSemesterLengthAdjustTheir'),
+        );
+      onSave(next);
     } catch (error) {
-      setError(error instanceof Error ? error.message : t('请检查设置'));
+      setError(
+        error instanceof Error
+          ? error.message
+          : t('ui.pleaseCheckYourSettings'),
+      );
     }
   }
   return (
     <Modal
-      title={t('课表设置')}
-      subtitle={t('调好校园时钟，开启专属日常。')}
+      title={t('ui.timetableSettings')}
+
       onClose={onClose}
     >
       <form onSubmit={submit} className="course-form" noValidate>
         <label>
-          {t('学期名称')}
+          {t('ui.semesterName')}
           <input
             required
             maxLength={60}
@@ -734,7 +851,7 @@ function SettingsModal({
         </label>
         <div className="form-grid">
           <label>
-            {t('第一周的周一')}
+            {t('settings.firstDay')}
             <input
               type="date"
               required
@@ -745,7 +862,7 @@ function SettingsModal({
             />
           </label>
           <label>
-            {t('学期总周数')}
+            {t('ui.semesterLengthWeeks')}
             <input
               type="number"
               min={1}
@@ -758,41 +875,44 @@ function SettingsModal({
             />
           </label>
         </div>
+        <p className="timing-help">{t('settings.firstWeekHelp')}</p>
+        <label>
+          {t('settings.periodCount')}
+          <input
+            type="number"
+            min={1}
+            max={MAX_PERIODS}
+            step={1}
+            required
+            value={periodCount}
+            onChange={(e) => setPeriodCount(e.target.value)}
+          />
+        </label>
         <div className="period-settings">
-          <strong>{t('每日作息')}</strong>
-          <p>{t('修改后，课表与即将开始的课程会同步更新。')}</p>
+          <strong>{t('ui.classTimes')}</strong>
+          <p>{t('settings.optionalTimes')}</p>
           <div>
-            {draft.periods.map((p, i) => (
+            {visiblePeriods.map((p, i) => (
               <div className="period-setting" key={i}>
-                <span>{t('第 {0} 节', { 0: i + 1 })}</span>
+                <span>{t('ui.period', { 0: i + 1 })}</span>
                 <input
-                  aria-label={t('第 {0} 节开始时间', { 0: i + 1 })}
-                  type="time"
-                  required
+                  aria-label={t('ui.periodStartTime', { 0: i + 1 })}
+                  type="text"
+                  placeholder="HH:mm"
+                  maxLength={5}
+                  pattern="([01][0-9]|2[0-3]):[0-5][0-9]"
                   value={p.start}
-                  onChange={(e) =>
-                    setDraft({
-                      ...draft,
-                      periods: draft.periods.map((v, j) =>
-                        j === i ? { ...v, start: e.target.value } : v,
-                      ),
-                    })
-                  }
+                  onChange={(e) => setPeriodTime(i, 'start', e.target.value)}
                 />
                 <span>—</span>
                 <input
-                  aria-label={t('第 {0} 节结束时间', { 0: i + 1 })}
-                  type="time"
-                  required
+                  aria-label={t('ui.periodEndTime', { 0: i + 1 })}
+                  type="text"
+                  placeholder="HH:mm"
+                  maxLength={5}
+                  pattern="([01][0-9]|2[0-3]):[0-5][0-9]"
                   value={p.end}
-                  onChange={(e) =>
-                    setDraft({
-                      ...draft,
-                      periods: draft.periods.map((v, j) =>
-                        j === i ? { ...v, end: e.target.value } : v,
-                      ),
-                    })
-                  }
+                  onChange={(e) => setPeriodTime(i, 'end', e.target.value)}
                 />
               </div>
             ))}
@@ -804,12 +924,15 @@ function SettingsModal({
           </p>
         )}
         <div className="modal-actions">
-          <div className="action-spacer" />
+          <span className="settings-storage">
+            {t('ui.savedInThisBrowserOnly')}
+          </span>
           <button className="button secondary" type="button" onClick={onClose}>
-            {t('取消')}
+            {t('ui.cancel')}
           </button>
           <button className="button primary" type="submit">
-            {t('保存设置')}
+            {t('ui.saveSettings')}
+            <Check size={16} aria-hidden="true" />
           </button>
         </div>
       </form>
@@ -827,7 +950,11 @@ function MiniCalendar({
   setWeek: (week: number) => void;
 }) {
   const { t, days: DAYS, narrowDays, date: formatDate } = useI18n();
-  const selected = dateAtWeek(settings, week),
+  const weekStart = dateAtWeek(settings, week);
+  const selected =
+      localDate(weekStart) < settings.startDate
+        ? new Date(`${settings.startDate}T12:00:00`)
+        : weekStart,
     month = selected.getMonth(),
     year = selected.getFullYear();
   const offset = (new Date(year, month, 1).getDay() + 6) % 7,
@@ -855,8 +982,12 @@ function MiniCalendar({
             <button
               key={i}
               className={`${w === week ? 'in-week' : ''} ${localDate(date) === today ? 'is-today' : ''}`}
-              disabled={w < 1 || w > settings.totalWeeks}
-              aria-label={t('{0}，第 {1} 周', {
+              disabled={
+                w < 1 ||
+                w > settings.totalWeeks ||
+                localDate(date) < settings.startDate
+              }
+              aria-label={t('calendar.dateWeek', {
                 0: formatDate(date, { month: 'long', day: 'numeric' }),
                 1: w,
               })}
@@ -874,38 +1005,49 @@ function CourseCard({
   course,
   onClick,
   compact = false,
+  showRemarks,
+  status,
 }: {
   course: Course;
   onClick: () => void;
   compact?: boolean;
+  showRemarks: boolean;
+  status?: 'past' | 'current' | 'next';
 }) {
   const { t } = useI18n();
   return (
     <button
-      className={`course-card ${course.color} ${compact ? 'compact' : ''}`}
+      className={`course-card ${course.color} ${compact ? 'compact' : ''} ${status ? `is-${status}` : ''}`}
+      aria-description={
+        status === 'current'
+          ? t('schedule.currentClass')
+          : status === 'next'
+            ? t('schedule.nextClass')
+            : undefined
+      }
       onClick={onClick}
-      title={t('{0} · {1} · {2}-{3} 节', {
-        0: course.name,
-        1: course.room,
-        2: course.start,
-        3: course.end,
-      })}
+      title={`${course.name} · ${course.room} · ${courseTimingLabel(course, t)}`}
     >
       <span className="course-card-top">
         <span className="course-dot" />
-        <span>{t('{0}–{1} 节', { 0: course.start, 1: course.end })}</span>
+        <span>{courseTimingLabel(course, t)}</span>
         <ArrowUpRight size={12} />
       </span>
       <strong>{course.name}</strong>
-      {!compact && (
-        <span className="course-room">
-          <MapPin size={12} />
-          {course.room || t('地点待定')}
+      <span className="course-room">
+        <MapPin size={12} />
+        {course.room || t('ui.locationTbd')}
+      </span>
+      {(status === 'current' || status === 'next') && (
+        <span className="course-state">
+          {status === 'current'
+            ? t('schedule.currentClass')
+            : t('schedule.nextClass')}
         </span>
       )}
-      {!compact && (
-        <span className="course-teacher">
-          {course.teacher || t('教师待定')}
+      {showRemarks && course.note.trim() && (
+        <span className="remark-preview">
+          {t('course.remark')}: {course.note}
         </span>
       )}
     </button>
@@ -925,17 +1067,16 @@ export default function App() {
       isDemo
         ? storedCourses.map((course) => ({
             ...course,
-            name: t(course.name),
-            teacher: t(course.teacher),
-            room: t(course.room),
+            name: localizeDemoText(course.name, locale),
+            teacher: localizeDemoText(course.teacher, locale),
+            room: localizeDemoText(course.room, locale),
           }))
         : storedCourses,
-    [storedCourses, isDemo, t],
+    [storedCourses, isDemo, locale],
   );
-  const semesterName =
-    settings.semester === DEFAULT_SETTINGS.semester
-      ? t(settings.semester)
-      : settings.semester;
+  const semesterName = isDefaultSemester(settings.semester)
+    ? t('demo.semester')
+    : settings.semester;
   const [week, setWeek] = useState(() =>
     Math.max(
       1,
@@ -946,24 +1087,36 @@ export default function App() {
     ),
   );
   const [page, setPage] = useState<'schedule' | 'courses'>('schedule'),
-    [view, setView] = useState<'week' | 'list'>('week'),
-    [showWeekend, setShowWeekend] = useState(true),
+    [display, setDisplay] = useState<DisplayPreferences>(() => {
+      try {
+        return parseDisplayPreferences(localStorage.getItem(DISPLAY_KEY));
+      } catch {
+        return parseDisplayPreferences(null);
+      }
+    }),
     [query, setQuery] = useState(''),
     [modal, setModal] = useState<
-      'course' | 'import' | 'settings' | 'help' | 'blank' | null
+      'course' | 'detail' | 'import' | 'settings' | 'help' | 'blank' | null
     >(null),
     [editing, setEditing] = useState<Course | undefined>(),
     [newDay, setNewDay] = useState<number | undefined>(),
     [toast, setToast] = useState(''),
-    [mobileNav, setMobileNav] = useState(false),
-    [now, setNow] = useState(new Date());
+    [mobileNav, setMobileNav] = useState(false);
+  const now = useNow();
+  const { showWeekend, showRemarks } = display;
+  function chooseDisplay(next: DisplayPreferences) {
+    setDisplay(next);
+    try {
+      localStorage.setItem(DISPLAY_KEY, JSON.stringify(next));
+    } catch {
+      notify(t('display.saveFailed'));
+    }
+  }
   const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined,
   );
   useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 60000);
     return () => {
-      clearInterval(id);
       clearTimeout(toastTimer.current);
     };
   }, []);
@@ -973,11 +1126,7 @@ export default function App() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
       setStorageError('');
     } catch {
-      setStorageError(
-        t(
-          '本地保存失败，可能是存储空间已满。请导出 Excel 备份，关闭页面会丢失本次修改。',
-        ),
-      );
+      setStorageError(t('ui.couldNotSaveLocallyStorageMayBeFullExport'));
     }
   }, [data, changed]);
   function notify(text: string) {
@@ -994,6 +1143,10 @@ export default function App() {
     setNewDay(day);
     setModal('course');
   }
+  function showDetails(course: Course) {
+    setEditing(course);
+    setModal('detail');
+  }
   function edit(course: Course) {
     setEditing(course);
     setModal('course');
@@ -1007,11 +1160,7 @@ export default function App() {
         : [...courses, course],
     });
     setModal(null);
-    notify(
-      editing
-        ? t('课程修改已保存，安排妥当啦')
-        : t('新课程已添加，课程小队 +1！'),
-    );
+    notify(editing ? t('course.saved') : t('course.added'));
   }
   function remove(id: string) {
     update({
@@ -1020,58 +1169,49 @@ export default function App() {
       courses: courses.filter((c) => c.id !== id),
     });
     setModal(null);
-    notify(t('课程已删除'));
+    notify(t('ui.courseDeleted'));
   }
   const matches = (course: Course) =>
     `${course.name} ${course.teacher} ${course.room}`
       .toLowerCase()
       .includes(query.trim().toLowerCase());
-  const weekCourses = courses.filter((c) => c.weeks.includes(week));
+  const weekCourses = courses.filter((c) =>
+    courseOccursInWeek(c, settings, week),
+  );
   const filtered = weekCourses.filter(matches),
     allFiltered = courses.filter(matches);
   const days = showWeekend ? DAYS : DAYS.slice(0, 5);
-  const uniqueCourses = new Set(weekCourses.map((c) => c.name)).size,
-    lessons = weekCourses.reduce((sum, c) => sum + c.end - c.start + 1, 0),
-    freeDays = 7 - new Set(weekCourses.map((c) => c.day)).size;
   const selectedStart = dateAtWeek(settings, week),
-    selectedEnd = dateAtWeek(settings, week, 7),
-    actualWeek = currentWeek(settings, now);
-  const upcoming = useMemo(() => {
-    const entries: { course: Course; date: Date; week: number }[] = [];
-    for (
-      let w = Math.max(1, currentWeek(settings, now));
-      w <= settings.totalWeeks;
-      w++
-    ) {
-      for (const c of courses.filter((c) => c.weeks.includes(w))) {
-        const date = dateAtWeek(settings, w, c.day);
-        const [hour, minute] = settings.periods[c.start - 1].start
-          .split(':')
-          .map(Number);
-        date.setHours(hour, minute, 0, 0);
-        if (date >= now) entries.push({ course: c, date, week: w });
-      }
-      if (entries.length >= 3) break;
-    }
-    return entries
-      .sort((a, b) => a.date.getTime() - b.date.getTime())
-      .slice(0, 3);
-  }, [courses, settings, now]);
-  const weekPassed = Math.max(
-    0,
-    Math.min(
-      100,
-      ((now.getTime() - dateAtWeek(settings, week).setHours(0, 0, 0, 0)) /
-        (7 * 86400000)) *
-        100,
-    ),
+    selectedEnd = dateAtWeek(settings, week, 7);
+  const recent = useMemo(
+    () => recentCourses(courses, settings, now),
+    [courses, settings, now],
   );
+  function courseStatus(
+    course: Course,
+  ): 'past' | 'current' | 'next' | undefined {
+    if (occurrenceIsPast(courseOccurrence(course, settings, week), now))
+      return 'past';
+    if (
+      recent.current.some(
+        (entry) => entry.week === week && entry.course.id === course.id,
+      )
+    )
+      return 'current';
+    if (
+      recent.next.some(
+        (entry) => entry.week === week && entry.course.id === course.id,
+      )
+    )
+      return 'next';
+    return undefined;
+  }
   async function exportCourses() {
     try {
       await (await import('./importer')).downloadWorkbook(courses, locale);
-      notify(t('课程表已导出为 Excel'));
+      notify(t('ui.timetableExportedToExcel'));
     } catch {
-      notify(t('导出失败，请重试'));
+      notify(t('ui.exportFailedPleaseTryAgain'));
     }
   }
   return (
@@ -1083,7 +1223,7 @@ export default function App() {
         <a
           className="brand"
           href="#"
-          aria-label={t('Moving-on Schedule 首页')}
+          aria-label={t('ui.movingOnScheduleHome')}
           onClick={(e) => {
             e.preventDefault();
             setPage('schedule');
@@ -1104,18 +1244,10 @@ export default function App() {
             <GraduationCap size={20} />
           </span>
           <div>
-            <strong>{t('我的校园物语')}</strong>
+            <strong>{t('settings.semester')}</strong>
             <span>{semesterName.split('·').pop()?.trim()}</span>
           </div>
-          <button
-            className="icon-button"
-            aria-label={t('编辑学期')}
-            onClick={() => setModal('settings')}
-          >
-            <ChevronDown size={15} />
-          </button>
         </div>
-        <span className="nav-label">{t('课表小天地')}</span>
         <nav>
           <button
             className={page === 'schedule' ? 'active' : ''}
@@ -1125,8 +1257,7 @@ export default function App() {
             }}
           >
             <CalendarDays size={19} />
-            {t('我的课表')}
-            <span className="nav-indicator" />
+            {t('schedule.title')}
           </button>
           <button
             className={page === 'courses' ? 'active' : ''}
@@ -1136,15 +1267,10 @@ export default function App() {
             }}
           >
             <BookOpen size={19} />
-            {t('全部课程')}
+            {t('course.all')}
             <span className="nav-count">
               {new Set(courses.map((c) => c.name)).size}
             </span>
-          </button>
-          <button onClick={() => setModal('import')}>
-            <Upload size={19} />
-            {t('导入课表')}
-            <ArrowUpRight className="nav-arrow" size={14} />
           </button>
         </nav>
         <div className="sidebar-rule" />
@@ -1156,31 +1282,17 @@ export default function App() {
             setPage('schedule');
           }}
         />
+        <WeekJourney settings={settings} week={week} now={now} />
         <div className="sidebar-grow" />
-        <div className="sidebar-note">
-          <Sparkles className="little-star" size={23} aria-hidden="true" />
-          <p>
-            {t('今天的努力，')}
-            <br />
-            {t('明天会发光。')}
-          </p>
-          <span>A LITTLE MAGIC, EVERY DAY.</span>
-          <div className="note-orbit" />
-        </div>
         <div className="bottom-nav">
           <button onClick={() => setModal('settings')}>
             <Settings2 size={18} />
-            {t('课表设置')}
+            {t('ui.timetableSettings')}
           </button>
           <button onClick={() => setModal('help')}>
             <HelpCircle size={18} />
-            {t('使用指南')}
-            <ArrowUpRight size={13} />
+            {t('ui.gettingStarted')}
           </button>
-        </div>
-        <div className="local-status">
-          <span />
-          {t('仅存储在此浏览器')}
         </div>
       </aside>
       <div className="workspace">
@@ -1188,28 +1300,24 @@ export default function App() {
           <div className="breadcrumb">
             <button
               className="icon-button mobile-menu"
-              aria-label={t('打开导航')}
+              aria-label={t('ui.openNavigation')}
               onClick={() => setMobileNav(true)}
             >
               <Menu size={20} />
             </button>
-            <span>{t('课表小天地')}</span>
-            <ChevronRight size={13} />
-            <strong>
-              {page === 'schedule' ? t('我的课表') : t('全部课程')}
-            </strong>
+            <strong className="header-brand">Moving-on Schedule</strong>
           </div>
           <div className="topbar-right">
             <select
               className="language-select"
-              aria-label={t('界面语言')}
+              aria-label={t('ui.language')}
               value={locale}
               onChange={(event) => {
                 const next = event.target.value as Locale;
                 if (!chooseLocale(next))
                   notify(
                     createTranslator(next)(
-                      '语言已切换，但浏览器暂时无法记住这个选择。',
+                      'ui.languageChangedButThisBrowserCouldNotSaveYour',
                     ),
                   );
               }}
@@ -1223,13 +1331,13 @@ export default function App() {
             <div
               className="theme-switch"
               role="group"
-              aria-label={t('外观模式')}
+              aria-label={t('ui.appearance')}
             >
               {(
                 [
-                  ['light', t('浅色模式'), Sun],
-                  ['dark', t('深色模式'), Moon],
-                  ['system', t('跟随系统'), Monitor],
+                  ['light', t('ui.lightMode'), Sun],
+                  ['dark', t('ui.darkMode'), Moon],
+                  ['system', t('ui.useSystemTheme'), Monitor],
                 ] as const
               ).map(([value, label, Icon]) => (
                 <button
@@ -1240,7 +1348,9 @@ export default function App() {
                   aria-pressed={preference === value}
                   onClick={() => {
                     if (!chooseTheme(value))
-                      notify(t('外观已切换，但浏览器暂时无法记住这个选择。'));
+                      notify(
+                        t('ui.appearanceChangedButThisBrowserCouldNotSaveYour'),
+                      );
                   }}
                 >
                   <Icon size={16} aria-hidden="true" />
@@ -1256,27 +1366,28 @@ export default function App() {
               <span>{DAYS[(now.getDay() + 6) % 7]}</span>
             </span>
             <div className="topbar-divider" />
-            <span className="avatar" aria-label={t('个人课表小天地')}>
+            <span className="avatar" aria-label={t('ui.yourPersonalPlanner')}>
               M
             </span>
           </div>
         </header>
         <main>
           <section className="page-heading">
-            <div>
+            <div className="home-title">
               <div className="heading-kicker">
-                <Sparkles size={12} aria-hidden="true" /> READY, SET, SPARKLE!
+                <Sparkles size={12} aria-hidden="true" /> READY, SET, SHINING!
               </div>
               <h1>
                 {page === 'schedule'
-                  ? t('新的一周，元气加载！')
-                  : t('课程小队，全员集合！')}
+                  ? t('schedule.greeting')
+                  : t('course.greeting')}
               </h1>
               <p>
                 {page === 'schedule'
-                  ? t('带上好奇心出发，也要记得给自己充充电呀。')
-                  : t('把喜欢的知识装进口袋，校园冒险就要开始啦。')}
+                  ? t('schedule.greetingHint')
+                  : t('course.greetingHint')}
               </p>
+              {!courses.length && <p>{t('schedule.emptyHelp')}</p>}
             </div>
             <div className="heading-actions">
               {isDemo && (
@@ -1284,7 +1395,7 @@ export default function App() {
                   className="text-button blank-start"
                   onClick={() => setModal('blank')}
                 >
-                  {t('使用空白课表')}
+                  {t('ui.startFresh')}
                   <ArrowUpRight size={13} />
                 </button>
               )}
@@ -1293,11 +1404,11 @@ export default function App() {
                 onClick={() => setModal('import')}
               >
                 <Upload size={16} />
-                {t('导入课表')}
+                {t('ui.importTimetable')}
               </button>
               <button className="button primary" onClick={() => add()}>
                 <Plus size={18} />
-                {t('添加课程')}
+                {t('course.add')}
               </button>
             </div>
           </section>
@@ -1305,66 +1416,32 @@ export default function App() {
             <div className="notice error" role="alert">
               {t(storageError)}
               <button className="text-button" onClick={exportCourses}>
-                {t('导出当前课表')}
+                {t('ui.exportCurrentTimetable')}
               </button>
             </div>
           )}
-          <section className="summary-strip">
-            <div className="summary-item">
-              <span className="summary-icon blue">
-                <BookOpen size={19} />
-              </span>
-              <div>
-                <span>{t('本周课程')}</span>
-                <strong>
-                  {uniqueCourses}
-                  <small>{t('门课程')}</small>
-                </strong>
-              </div>
-            </div>
-            <div className="summary-item">
-              <span className="summary-icon peach">
-                <Clock3 size={19} />
-              </span>
-              <div>
-                <span>{t('学习能量')}</span>
-                <strong>
-                  {lessons}
-                  <small>{t('节课')}</small>
-                </strong>
-              </div>
-            </div>
-            <div className="summary-item">
-              <span className="summary-icon lavender">
-                <Coffee size={19} />
-              </span>
-              <div>
-                <span>{t('充电时间')}</span>
-                <strong>
-                  {freeDays}
-                  <small>{t('天无课')}</small>
-                </strong>
-              </div>
-            </div>
-            <div className="semester-summary">
-              <span className="semester-tag">{semesterName}</span>
-              <button
-                className="text-button"
-                onClick={() => setModal('settings')}
-              >
-                {t('共 {0} 周', { 0: settings.totalWeeks })}
-                <SlidersHorizontal size={14} />
-              </button>
-            </div>
-          </section>
-          <div className="content-layout">
+          <div
+            className={`content-layout ${page === 'schedule' ? 'with-coming-up' : ''}`}
+          >
+            {page === 'schedule' && (
+              <ComingUp
+                courses={courses}
+                settings={settings}
+                now={now}
+                showRemarks={showRemarks}
+                onSelect={showDetails}
+                onViewAll={() => setPage('courses')}
+              />
+            )}
             <section className="schedule-panel">
               <div className="schedule-toolbar">
                 <div className="week-control">
                   <h2>
                     {page === 'courses'
-                      ? t('全部课程')
-                      : t('第 {0} 周', { 0: String(week).padStart(2, '0') })}
+                      ? t('course.all')
+                      : t('schedule.week', {
+                          0: String(week).padStart(2, '0'),
+                        })}
                   </h2>
                   {page === 'schedule' && (
                     <>
@@ -1382,7 +1459,7 @@ export default function App() {
                       <div className="week-arrows">
                         <button
                           className="icon-button"
-                          aria-label={t('上一周')}
+                          aria-label={t('ui.previousWeek')}
                           disabled={week === 1}
                           onClick={() => setWeek(week - 1)}
                         >
@@ -1390,107 +1467,105 @@ export default function App() {
                         </button>
                         <button
                           className="icon-button"
-                          aria-label={t('下一周')}
+                          aria-label={t('ui.nextWeek')}
                           disabled={week === settings.totalWeeks}
                           onClick={() => setWeek(week + 1)}
                         >
                           <ChevronRight size={17} />
                         </button>
                       </div>
-                      <button
-                        className="this-week"
-                        disabled={
-                          actualWeek < 1 || actualWeek > settings.totalWeeks
-                        }
-                        onClick={() =>
-                          setWeek(
-                            Math.max(
-                              1,
-                              Math.min(actualWeek, settings.totalWeeks),
-                            ),
-                          )
-                        }
-                      >
-                        {t('本周')}
-                      </button>
                     </>
                   )}
-                </div>
-                <div className="view-switch">
-                  <button
-                    aria-label={t('周课表视图')}
-                    className={
-                      page === 'schedule' && view === 'week' ? 'active' : ''
-                    }
-                    onClick={() => {
-                      setPage('schedule');
-                      setView('week');
+                  <details
+                    className="display-options"
+                    onKeyDown={(event) => {
+                      if (event.key === 'Escape') {
+                        event.currentTarget.open = false;
+                        event.currentTarget.querySelector('summary')?.focus();
+                      }
                     }}
                   >
-                    <LayoutGrid size={15} />
-                    <span>{t('周视图')}</span>
-                  </button>
-                  <button
-                    aria-label={t('课程列表视图')}
-                    className={
-                      view === 'list' || page === 'courses' ? 'active' : ''
-                    }
-                    onClick={() => setView('list')}
-                  >
-                    <List size={16} />
-                    <span>{t('列表')}</span>
-                  </button>
+                    <summary>
+                      <SlidersHorizontal size={16} />
+                      {t('display.title')}
+                    </summary>
+                    <div className="display-menu">
+                      {page === 'schedule' && (
+                        <label>
+                          <input
+                            type="checkbox"
+                            checked={showWeekend}
+                            onChange={(e) =>
+                              chooseDisplay({
+                                ...display,
+                                showWeekend: e.target.checked,
+                              })
+                            }
+                          />
+                          {t('ui.weekends')}
+                        </label>
+                      )}
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={showRemarks}
+                          onChange={(e) =>
+                            chooseDisplay({
+                              ...display,
+                              showRemarks: e.target.checked,
+                            })
+                          }
+                        />
+                        {t('display.showRemarks')}
+                      </label>
+                      <button onClick={exportCourses}>
+                        <ArrowDownToLine size={16} />
+                        {t('ui.exportExcelTimetable')}
+                      </button>
+                    </div>
+                  </details>
                 </div>
-              </div>
-              <div className="schedule-subtoolbar">
                 <label className="search-box">
                   <Search size={16} />
                   <input
-                    aria-label={t('搜索课程、教师或教室')}
-                    placeholder={t('搜索课程、教师或教室')}
+                    aria-label={t('ui.searchCoursesTeachersRooms')}
+                    placeholder={t('ui.searchCoursesTeachersRooms')}
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                   />
                   {query && (
                     <button
                       className="icon-button"
-                      aria-label={t('清除搜索')}
+                      aria-label={t('ui.clearSearch')}
                       onClick={() => setQuery('')}
                     >
                       <X size={13} />
                     </button>
                   )}
                 </label>
-                <div className="table-options">
-                  {isDemo && (
-                    <span className="demo-badge">{t('示例课表')}</span>
-                  )}
-                  {page === 'schedule' && view === 'week' && (
-                    <label className="weekend-toggle">
-                      <input
-                        type="checkbox"
-                        checked={showWeekend}
-                        onChange={(e) => setShowWeekend(e.target.checked)}
-                      />
-                      <span className="toggle-track" />
-                      {t('显示周末')}
-                    </label>
-                  )}
-                  <button
-                    className="icon-button"
-                    aria-label={t('导出 Excel 课表')}
-                    title={t('导出 Excel 课表')}
-                    onClick={exportCourses}
-                  >
-                    <ArrowDownToLine size={16} />
-                  </button>
-                </div>
               </div>
-              {page === 'schedule' && view === 'week' ? (
+              {!showWeekend &&
+                filtered.some((course) => course.day > 5) &&
+                page === 'schedule' && (
+                  <button
+                    className="weekend-notice"
+                    onClick={() =>
+                      chooseDisplay({ ...display, showWeekend: true })
+                    }
+                  >
+                    {t('schedule.hiddenWeekend')}
+                  </button>
+                )}
+              {page === 'schedule' ? (
                 <>
                   <div className="timetable-scroll">
                     <div
                       className="timetable"
+                      data-periods={settings.periods.length}
+                      data-remarks={
+                        showRemarks &&
+                        filtered.some((course) => course.note.trim())
+                      }
                       style={{
                         gridTemplateColumns: `48px repeat(${days.length}, minmax(100px, 1fr))`,
                       }}
@@ -1510,10 +1585,41 @@ export default function App() {
                             <strong>
                               {String(date.getDate()).padStart(2, '0')}
                             </strong>
-                            {today && <i />}
+                            {today && (
+                              <span className="today-label">
+                                {t('ui.today')}
+                              </span>
+                            )}
                           </div>
                         );
                       })}
+                      {filtered.some((course) => course.timing === 'time') && (
+                        <>
+                          <div className="clock-row-label">
+                            {t('timing.clockCourses')}
+                          </div>
+                          {days.map((day, i) => (
+                            <div className="clock-day" key={`clock-${day}`}>
+                              {filtered
+                                .filter(
+                                  (course) =>
+                                    course.timing === 'time' &&
+                                    course.day === i + 1,
+                                )
+                                .sort((a, b) => compareCourses(a, b, settings))
+                                .map((course) => (
+                                  <CourseCard
+                                    key={course.id}
+                                    course={course}
+                                    showRemarks={showRemarks}
+                                    status={courseStatus(course)}
+                                    onClick={() => showDetails(course)}
+                                  />
+                                ))}
+                            </div>
+                          ))}
+                        </>
+                      )}
                       <div className="period-column">
                         {settings.periods.map((p, i) => (
                           <div
@@ -1528,9 +1634,10 @@ export default function App() {
                       </div>
                       {days.map((day, i) => {
                         const dayCourses = filtered
+                          .filter(isPeriodCourse)
                           .filter((c) => c.day === i + 1)
                           .sort((a, b) => a.start - b.start || a.end - b.end);
-                        const clusters: Course[][] = [];
+                        const clusters: PeriodCourse[][] = [];
                         for (const c of dayCourses) {
                           const last = clusters[clusters.length - 1];
                           if (last && last.some((v) => v.end >= c.start))
@@ -1546,10 +1653,15 @@ export default function App() {
                               {settings.periods.map((_, j) => (
                                 <button
                                   key={j}
+                                  disabled={
+                                    localDate(
+                                      dateAtWeek(settings, week, i + 1),
+                                    ) < settings.startDate
+                                  }
                                   className={
                                     j === 4 || j === 8 ? 'break-top' : ''
                                   }
-                                  aria-label={t('{0}第{1}节添加课程', {
+                                  aria-label={t('ui.addACourseOnPeriod', {
                                     0: day,
                                     1: j + 1,
                                   })}
@@ -1562,7 +1674,10 @@ export default function App() {
                                       note: '',
                                       day: i + 1,
                                       start: j + 1,
-                                      end: Math.min(j + 2, 12),
+                                      end: Math.min(
+                                        j + 2,
+                                        settings.periods.length,
+                                      ),
                                       weeks: Array.from(
                                         { length: settings.totalWeeks },
                                         (_, k) => k + 1,
@@ -1578,11 +1693,11 @@ export default function App() {
                             {clusters.flatMap((cluster) =>
                               cluster.map((course, index) => (
                                 <div
-                                  className="course-position"
+                                  className={`course-position ${course.start === 5 || course.start === 9 ? 'after-break' : ''}`}
                                   key={course.id}
                                   style={{
-                                    top: `${(course.start - 1) * 64 + 4}px`,
-                                    height: `${(course.end - course.start + 1) * 64 - 8}px`,
+                                    top: `calc(${course.start - 1} * var(--row-height) + var(--course-top-inset))`,
+                                    height: `calc(${course.end - course.start + 1} * var(--row-height) - var(--course-top-inset) - 6px)`,
                                     left: `calc(${(index / cluster.length) * 100}% + 4px)`,
                                     width: `calc(${100 / cluster.length}% - 8px)`,
                                   }}
@@ -1593,27 +1708,23 @@ export default function App() {
                                       course.end === course.start ||
                                       cluster.length > 1
                                     }
-                                    onClick={() => edit(course)}
+                                    showRemarks={showRemarks}
+                                    status={courseStatus(course)}
+                                    onClick={() => showDetails(course)}
                                   />
                                 </div>
                               )),
                             )}
-                            {!dayCourses.length && i >= 5 && !query && (
-                              <div className="weekend-empty">
-                                <Coffee size={20} />
-                                <span>
-                                  {t('今日份空闲')}
-                                  <br />
-                                  {t('自由放电吧')}
-                                </span>
-                                <button
-                                  onClick={() => add(i + 1)}
-                                  aria-label={t('{0}添加课程', { 0: day })}
-                                >
-                                  <Plus size={15} />
-                                </button>
-                              </div>
-                            )}
+                            {!filtered.some((course) => course.day === i + 1) &&
+                              i >= 5 &&
+                              localDate(dateAtWeek(settings, week, i + 1)) >=
+                                settings.startDate &&
+                              !query && (
+                                <div className="weekend-empty">
+                                  <Coffee size={20} aria-hidden="true" />
+                                  <span>{t('schedule.noClasses')}</span>
+                                </div>
+                              )}
                           </div>
                         );
                       })}
@@ -1623,13 +1734,13 @@ export default function App() {
                     <div className="inline-empty">
                       <BookOpen size={18} />
                       {query
-                        ? t('没有找到匹配的课程')
-                        : t(
-                            '课表还是空空的，添加课程或导入课表，开启新篇章吧。',
-                          )}
+                        ? t('ui.noMatchingCourses')
+                        : courses.length
+                          ? t('schedule.emptyWeek')
+                          : t('schedule.emptyHelp')}
                       {!query && (
                         <button className="text-button" onClick={() => add()}>
-                          {t('添加课程')}
+                          {t('course.add')}
                           <ArrowRight size={14} />
                         </button>
                       )}
@@ -1644,13 +1755,17 @@ export default function App() {
                       <BookOpen size={35} />
                       <h3>
                         {query
-                          ? t('没有找到匹配的课程')
-                          : t('第一门课，等你来解锁。')}
+                          ? t('ui.noMatchingCourses')
+                          : courses.length
+                            ? t('schedule.emptyWeek')
+                            : t('schedule.noCourses')}
                       </h3>
                       <p>
                         {query
-                          ? t('这门课好像躲起来了，换个关键词试试吧。')
-                          : t('添加一门课程，或让 Excel 帮你把课表填好吧。')}
+                          ? t('search.tryAnother')
+                          : courses.length
+                            ? t('schedule.browseOtherWeeks')
+                            : t('schedule.emptyHelp')}
                       </p>
                       {!query && (
                         <button
@@ -1658,39 +1773,41 @@ export default function App() {
                           onClick={() => add()}
                         >
                           <Plus size={16} />
-                          {t('添加课程')}
+                          {t('course.add')}
                         </button>
                       )}
                     </div>
                   ) : (
                     [...(page === 'courses' ? allFiltered : filtered)]
-                      .sort((a, b) => a.day - b.day || a.start - b.start)
+                      .sort((a, b) => compareCourses(a, b, settings))
                       .map((c) => (
                         <button
                           className="course-list-row"
                           key={c.id}
-                          onClick={() => edit(c)}
+                          onClick={() => showDetails(c)}
                         >
                           <span className={`list-course-icon ${c.color}`}>
                             <BookOpen size={19} />
                           </span>
                           <div className="list-course-name">
                             <strong>{c.name}</strong>
+                            {showRemarks && c.note.trim() && (
+                              <span className="remark-preview">
+                                {t('course.remark')}: {c.note}
+                              </span>
+                            )}
                             <span>
-                              {c.teacher || t('教师待定')} ·{' '}
-                              {c.room || t('地点待定')}
+                              {c.teacher || t('ui.teacherTbd')} ·{' '}
+                              {c.room || t('ui.locationTbd')}
                             </span>
                           </div>
                           <div className="list-course-time">
                             <strong>
-                              {t('{0} · {1}–{2} 节', {
-                                0: DAYS[c.day - 1],
-                                1: c.start,
-                                2: c.end,
-                              })}
+                              {DAYS[c.day - 1]} ·{' '}
+                              {courseTimeLabel(c, settings, t)}
                             </strong>
                             <span>
-                              {t('第 {0} 周', { 0: formatWeeks(c.weeks) })}
+                              {t('schedule.week', { 0: formatWeeks(c.weeks) })}
                             </span>
                           </div>
                           <ChevronRight size={17} />
@@ -1699,264 +1816,85 @@ export default function App() {
                   )}
                 </div>
               )}
-              <footer className="schedule-footer">
-                <span>
-                  <span className="save-dot" />
-                  {storageError
-                    ? t('更改尚未保存')
-                    : changed || !isDemo
-                      ? t('已自动保存至此浏览器')
-                      : t('示例数据 · 导入课表，开启你的新学期')}
-                </span>
-                <span>
-                  {t('点击课程卡片即可编辑')}
-                  <ArrowUpRight size={12} />
-                </span>
-              </footer>
             </section>
-            <aside className="right-rail">
-              <section className="upcoming-panel">
-                <div className="rail-heading">
-                  <h3>{t('即将开始')}</h3>
-                  <span className="live-dot" />
-                </div>
-                <p className="rail-description">
-                  {t('下一节课，准备好出发了吗？')}
-                </p>
-                {upcoming.length ? (
-                  upcoming.map(({ course, date, week: w }, i) => (
-                    <button
-                      className="upcoming-course"
-                      key={`${course.id}-${w}`}
-                      onClick={() => edit(course)}
-                    >
-                      <div className="upcoming-timeline">
-                        <span className={i === 0 ? 'first' : ''} />
-                        {i < upcoming.length - 1 && <i />}
-                      </div>
-                      <div className="upcoming-content">
-                        <span className="upcoming-date">
-                          {localDate(date) === localDate(now)
-                            ? t('今天')
-                            : formatDate(date, {
-                                month: 'short',
-                                day: 'numeric',
-                              })}{' '}
-                          · {settings.periods[course.start - 1].start}
-                          {i === 0 && <small>NEXT</small>}
-                        </span>
-                        <strong>{course.name}</strong>
-                        <span className="upcoming-room">
-                          <MapPin size={12} />
-                          {course.room || t('地点待定')}
-                        </span>
-                        <span className={`upcoming-tag ${course.color}`}>
-                          {t('{0} · {1}–{2}  节', {
-                            0: DAYS[course.day - 1],
-                            1: course.start,
-                            2: course.end,
-                          })}
-                        </span>
-                      </div>
-                    </button>
-                  ))
-                ) : (
-                  <div className="upcoming-empty">
-                    <Coffee size={27} />
-                    <p>
-                      {t('暂时没有待上课程，休息一下吧')}
-                      <br />
-                      <small>{t('休息也是元气补给喔。')}</small>
-                    </p>
-                  </div>
-                )}
-                <button
-                  className="rail-link"
-                  onClick={() => {
-                    setPage('courses');
-                    setView('list');
-                  }}
-                >
-                  {t('查看全部课程')}
-                  <ArrowRight size={15} />
-                </button>
-              </section>
-              <section className="week-progress">
-                <div>
-                  <span>{t('本周进度条')}</span>
-                  <strong>
-                    {Math.floor(weekPassed)}
-                    <small>%</small>
-                  </strong>
-                </div>
-                <div className="progress-track">
-                  <span style={{ width: `${weekPassed}%` }} />
-                </div>
-                <p>
-                  {weekPassed >= 100
-                    ? t('本周篇章完结，辛苦啦！')
-                    : weekPassed <= 0
-                      ? t('新篇章待开启，准备出发！')
-                      : t('一点点前进，也在闪闪发光。')}
-                </p>
-              </section>
-              <section className="quote-card">
-                <div className="mascot-art" aria-hidden="true">
-                  <svg viewBox="0 0 180 150" fill="none">
-                    <ellipse cx="89" cy="133" rx="63" ry="10" fill="#d8ecff" />
-                    <path
-                      d="M35 128c-14 0-16-19-3-23 0-15 23-20 30-8 8-8 26-2 24 11 18-3 23 20 7 23H35Z"
-                      fill="white"
-                    />
-                    <g className="bunny">
-                      <ellipse
-                        cx="72"
-                        cy="42"
-                        rx="13"
-                        ry="31"
-                        transform="rotate(-13 72 42)"
-                        fill="#fffefd"
-                        stroke="#93bfdf"
-                        strokeWidth="2"
-                      />
-                      <ellipse
-                        cx="107"
-                        cy="42"
-                        rx="13"
-                        ry="31"
-                        transform="rotate(13 107 42)"
-                        fill="#fffefd"
-                        stroke="#93bfdf"
-                        strokeWidth="2"
-                      />
-                      <ellipse
-                        cx="72"
-                        cy="39"
-                        rx="6"
-                        ry="19"
-                        transform="rotate(-13 72 39)"
-                        fill="#f9dfe9"
-                      />
-                      <ellipse
-                        cx="107"
-                        cy="39"
-                        rx="6"
-                        ry="19"
-                        transform="rotate(13 107 39)"
-                        fill="#f9dfe9"
-                      />
-                      <ellipse
-                        cx="90"
-                        cy="108"
-                        rx="29"
-                        ry="26"
-                        fill="#fffefd"
-                        stroke="#93bfdf"
-                        strokeWidth="2"
-                      />
-                      <path
-                        d="M48 79c0-24 19-37 42-37s42 13 42 37c0 24-19 31-42 31S48 103 48 79Z"
-                        fill="#fffefd"
-                        stroke="#93bfdf"
-                        strokeWidth="2"
-                      />
-                      <ellipse cx="63" cy="87" rx="8" ry="5" fill="#f6cbdc" />
-                      <ellipse cx="117" cy="87" rx="8" ry="5" fill="#f6cbdc" />
-                      <ellipse cx="75" cy="78" rx="3.5" ry="5" fill="#426b8c" />
-                      <ellipse
-                        cx="105"
-                        cy="78"
-                        rx="3.5"
-                        ry="5"
-                        fill="#426b8c"
-                      />
-                      <circle cx="76" cy="76" r="1.2" fill="white" />
-                      <circle cx="106" cy="76" r="1.2" fill="white" />
-                      <path
-                        d="m87 85 3 2 3-2m-9 5c2 4 5 4 6 0 1 4 4 4 6 0"
-                        stroke="#426b8c"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="m66 111 24 4 24-4v24l-24 4-24-4Z"
-                        fill="#b6dcfb"
-                        stroke="#78aad2"
-                        strokeWidth="1.8"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M90 116v22m-17-19 10 2m-10 5 10 2m14-7 10-2m-10 9 10-2"
-                        stroke="#78aad2"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                      />
-                      <ellipse
-                        cx="63"
-                        cy="117"
-                        rx="7"
-                        ry="5"
-                        fill="#fffefd"
-                        stroke="#93bfdf"
-                        strokeWidth="1.5"
-                      />
-                      <ellipse
-                        cx="117"
-                        cy="117"
-                        rx="7"
-                        ry="5"
-                        fill="#fffefd"
-                        stroke="#93bfdf"
-                        strokeWidth="1.5"
-                      />
-                    </g>
-                    <path
-                      className="mascot-star"
-                      d="m145 35 3 8 8 3-8 3-3 8-3-8-8-3 8-3Z"
-                      fill="#f9df8d"
-                      stroke="#dbc47b"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="m30 64 2 5 5 2-5 2-2 5-2-5-5-2 5-2Z"
-                      fill="#b5d9f7"
-                    />
-                    <circle cx="148" cy="92" r="3" fill="#f5c9dc" />
-                    <circle cx="37" cy="39" r="2" fill="#b5d9f7" />
-                  </svg>
-                </div>
-                <span className="quote-kicker">YOUR LITTLE CHEER SQUAD</span>
-                <h3>
-                  {t('今天也有在')}
-                  <br />
-                  {t('好好长大呀。')}
-                </h3>
-                <p>
-                  {t('学习之余记得伸个懒腰，')}
-                  <br />
-                  {t('小兔给你补充一点元气。')}
-                </p>
-              </section>
-              <div className="rail-footnote">
-                <ShieldCheck size={14} />
-                <span>
-                  {t('校园日常，按你的节奏。')}
-                  <br />
-                  {t('你的数据，留在本地。')}
-                </span>
-              </div>
-            </aside>
+            {page === 'schedule' && <MascotCard />}
           </div>
           <footer className="page-footer">
-            <span>Moving-on Schedule</span>
-            <span>{t('把日常过成喜欢的番。')}</span>
-            <span>A NEW CHAPTER, EVERY DAY</span>
+            <div className="footer-identity">
+              <span>{t('footer.motto')}</span>
+              <span className="footer-source">
+                <span className="footer-divider" aria-hidden="true">
+                  |
+                </span>
+                <a
+                  href="https://github.com/hoicau/moving-on-schedule"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {t('footer.sourceCode')}
+                  <ArrowUpRight size={14} aria-hidden="true" />
+                </a>
+              </span>
+            </div>
           </footer>
         </main>
       </div>
+      {modal === 'detail' && editing && (
+        <Modal
+          title={editing.name}
+          subtitle={t('course.details')}
+          onClose={() => setModal(null)}
+        >
+          <dl className="course-details">
+            <div>
+              <dt>{t('ui.day')}</dt>
+              <dd>{DAYS[editing.day - 1]}</dd>
+            </div>
+            <div>
+              <dt>{t('course.time')}</dt>
+              <dd>{courseTimeLabel(editing, settings, t)}</dd>
+            </div>
+            <div>
+              <dt>{t('ui.weeks')}</dt>
+              <dd>{formatWeeks(editing.weeks)}</dd>
+            </div>
+            <div>
+              <dt>{t('ui.room')}</dt>
+              <dd>{editing.room || t('ui.locationTbd')}</dd>
+            </div>
+            <div>
+              <dt>{t('ui.teacher')}</dt>
+              <dd>{editing.teacher || t('ui.teacherTbd')}</dd>
+            </div>
+            {editing.note.trim() && (
+              <div>
+                <dt>{t('course.remark')}</dt>
+                <dd className="remark-full">{editing.note}</dd>
+              </div>
+            )}
+          </dl>
+          {conflicts(editing, courses, settings).length > 0 && (
+            <p className="notice warning">
+              {t('course.conflictDetails', {
+                0: conflicts(editing, courses, settings)
+                  .map((course) => course.name)
+                  .join(', '),
+              })}
+            </p>
+          )}
+          {unresolvedConflicts(editing, courses, settings).length > 0 && (
+            <p className="notice warning">{t('timing.unknownOverlap')}</p>
+          )}
+          <div className="modal-actions">
+            <button className="button primary" onClick={() => edit(editing)}>
+              {t('course.edit')}
+            </button>
+          </div>
+        </Modal>
+      )}
       {modal === 'course' && (
         <CourseForm
+          settings={settings}
           course={editing}
           day={newDay}
           totalWeeks={settings.totalWeeks}
@@ -1965,7 +1903,7 @@ export default function App() {
             if (editing && !courses.some((c) => c.id === editing.id)) {
               update({ ...data, isDemo: false, courses: [...courses, course] });
               setModal(null);
-              notify(t('新课程已添加，课程小队 +1！'));
+              notify(t('course.added'));
             } else save(course);
           }}
           onDelete={remove}
@@ -1974,6 +1912,7 @@ export default function App() {
       )}
       {modal === 'import' && (
         <ImportModal
+          settings={settings}
           totalWeeks={settings.totalWeeks}
           isDemo={isDemo}
           existing={courses}
@@ -1984,7 +1923,7 @@ export default function App() {
               isDemo: false,
             });
             setModal(null);
-            notify(t('已导入 {0} 条课程安排', { 0: imported.length }));
+            notify(t('ui.courseMeetingsImported', { 0: imported.length }));
           }}
           onClose={() => setModal(null)}
           notify={notify}
@@ -1998,36 +1937,35 @@ export default function App() {
             update({ ...data, settings: next });
             setWeek(Math.min(week, next.totalWeeks));
             setModal(null);
-            notify(t('课表设置已更新'));
+            notify(t('ui.timetableSettingsUpdated'));
           }}
           onClose={() => setModal(null)}
         />
       )}
       {modal === 'blank' && (
         <Modal
-          title={t('从空白课表开始')}
-          subtitle={t('翻开空白小本本，写下你的校园篇章。')}
+          title={t('ui.createBlankTimetable')}
+
           onClose={() => setModal(null)}
         >
           <p className="blank-description">
-            {t(
-              '这会清除当前 {0}  条安排，保留学期和作息设置。之后可以手动添加课程或导入 Excel。',
-              { 0: courses.length },
-            )}
+            {t('ui.thisRemovesAllCurrentMeetingsAndKeepsYourSemester', {
+              0: courses.length,
+            })}
           </p>
           <div className="modal-actions">
             <button className="button secondary" onClick={() => setModal(null)}>
-              {t('取消')}
+              {t('ui.cancel')}
             </button>
             <button
               className="button primary"
               onClick={() => {
                 update({ ...data, courses: [], isDemo: false });
                 setModal(null);
-                notify(t('空白课表已就绪，新篇章开始！'));
+                notify(t('schedule.blankCreated'));
               }}
             >
-              {t('创建空白课表')}
+              {t('ui.createBlankTimetable')}
               <ArrowRight size={16} />
             </button>
           </div>
@@ -2035,60 +1973,53 @@ export default function App() {
       )}
       {modal === 'help' && (
         <Modal
-          title={t('欢迎来到课表小天地！')}
-          subtitle={t('你的课表小伙伴，陪你解锁每个新学期。')}
+          title={t('ui.gettingStarted')}
+
           onClose={() => setModal(null)}
         >
           <div className="help-content">
             <div>
               <CalendarDays />
               <section>
-                <h3>{t('第一步：设定校园时钟')}</h3>
+                <h3>{t('help.settingsTitle')}</h3>
                 <p>
-                  {t(
-                    '在「课表设置」中填写第一周的周一、总周数和作息时间。使用箭头或侧边日历切换周次。',
-                  )}
+                  {t('ui.inTimetableSettingsSetTheFirstMondaySemesterLength')}
                 </p>
               </section>
             </div>
             <div>
               <Plus />
               <section>
-                <h3>{t('添加与管理课程')}</h3>
-                <p>
-                  {t(
-                    '点击「添加课程」或课表空白格录入。点击课程卡片可修改或删除。支持指定周次、单双周；时间重叠的课程会并排显示。',
-                  )}
-                </p>
+                <h3>{t('ui.addAndManageCourses')}</h3>
+                <p>{t('help.manageCourses')}</p>
               </section>
             </div>
             <div>
               <FileSpreadsheet />
               <section>
-                <h3>{t('从 Excel 搬进来')}</h3>
-                <p>
-                  {t(
-                    '下载导入模板，按每行一条安排填写 .xlsx 或 UTF-8 .csv。预览无错误后确认导入。你可以追加课程，也可以选择替换当前课表。',
-                  )}
-                </p>
+                <h3>{t('help.importTitle')}</h3>
+                <p>{t('ui.downloadTheTemplateAndUseOneMeetingPerRow')}</p>
+              </section>
+            </div>
+            <div>
+              <CalendarDays />
+              <section>
+                <h3>{t('display.title')}</h3>
+                <p>{t('help.display')}</p>
               </section>
             </div>
             <div>
               <ShieldCheck />
               <section>
-                <h3>{t('属于你的本地空间')}</h3>
-                <p>
-                  {t(
-                    '课程保存于当前浏览器，无需登录。清除浏览器数据、使用隐私窗口或更换设备时不会保留。建议通过课表右上方的下载按钮定期导出 Excel。首版暂不提供云同步。',
-                  )}
-                </p>
+                <h3>{t('help.storageTitle')}</h3>
+                <p>{t('ui.coursesStayInThisBrowserWithNoSignIn')}</p>
               </section>
             </div>
           </div>
           <div className="modal-actions">
             <button className="button primary" onClick={() => setModal(null)}>
-              {t('开始我的新学期')}
-              <ArrowRight size={16} />
+              {t('dialog.done')}
+              <Check size={16} aria-hidden="true" />
             </button>
           </div>
         </Modal>
@@ -2097,7 +2028,10 @@ export default function App() {
         <div className="toast" role="status">
           <CheckCircle2 size={18} />
           {toast}
-          <button aria-label={t('关闭提示')} onClick={() => setToast('')}>
+          <button
+            aria-label={t('ui.dismissNotification')}
+            onClick={() => setToast('')}
+          >
             <X size={14} />
           </button>
         </div>

@@ -1,5 +1,4 @@
 import { createTranslator, type Locale } from './i18n';
-export const DAYS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
 export const COLORS = [
   'sage',
   'peach',
@@ -9,18 +8,27 @@ export const COLORS = [
   'rose',
 ] as const;
 export type Color = (typeof COLORS)[number];
+export type CourseTiming =
+  | { timing?: 'period'; start: number; end: number }
+  | { timing: 'time'; start: string; end: string };
 export type Course = {
   id: string;
   name: string;
   teacher: string;
   room: string;
   day: number;
-  start: number;
-  end: number;
   weeks: number[];
   color: Color;
   note: string;
+} & CourseTiming;
+export type PeriodCourse = Course & {
+  start: number;
+  end: number;
+  timing?: 'period';
 };
+export function isPeriodCourse(course: Course): course is PeriodCourse {
+  return course.timing !== 'time';
+}
 export type Settings = {
   semester: string;
   startDate: string;
@@ -33,37 +41,25 @@ export type SavedData = {
   settings: Settings;
   isDemo: boolean;
 };
+export const MAX_PERIODS = 30;
 export const DEFAULT_SETTINGS: Settings = {
-  semester: '2026 — 2027 · 秋季学期',
+  semester: '2026 - 2027 Fall semester',
   startDate: '2026-09-07',
   totalWeeks: 20,
-  periods: [
-    ['08:00', '08:45'],
-    ['08:55', '09:40'],
-    ['10:00', '10:45'],
-    ['10:55', '11:40'],
-    ['14:00', '14:45'],
-    ['14:55', '15:40'],
-    ['16:00', '16:45'],
-    ['16:55', '17:40'],
-    ['19:00', '19:45'],
-    ['19:55', '20:40'],
-    ['20:50', '21:35'],
-    ['21:45', '22:30'],
-  ].map(([start, end]) => ({ start, end })),
+  periods: Array.from({ length: 12 }, () => ({ start: '', end: '' })),
 };
 const allWeeks = Array.from({ length: 16 }, (_, i) => i + 1);
-export const SAMPLE_COURSES: Course[] = [
-  ['高等数学 A', '陈明', '理科楼 A-302', 1, 1, 2, 'sage'],
-  ['大学英语', '林悦', '文科楼 B-201', 1, 5, 6, 'peach'],
-  ['设计思维与创新', '周嘉', '创意工坊 203', 2, 3, 4, 'lavender'],
-  ['Python 程序设计', '王宇', '信息楼 405', 2, 7, 8, 'blue'],
-  ['大学物理', '李教授', '理科楼 A-105', 3, 1, 2, 'yellow'],
-  ['高等数学 A', '陈明', '理科楼 A-302', 3, 5, 6, 'sage'],
-  ['大学英语', '林悦', '文科楼 B-201', 4, 3, 4, 'peach'],
-  ['体育 · 羽毛球', '张帆', '体育馆 2 号馆', 4, 7, 8, 'rose'],
-  ['Python 程序设计', '王宇', '信息楼 405', 5, 1, 2, 'blue'],
-  ['设计思维与创新', '周嘉', '创意工坊 203', 5, 5, 6, 'lavender'],
+export const SAMPLE_COURSES: PeriodCourse[] = [
+  ['Calculus A', 'Chen Ming', 'Science A-302', 1, 1, 2, 'sage'],
+  ['College English', 'Lin Yue', 'Humanities B-201', 1, 5, 6, 'peach'],
+  ['Design Thinking', 'Zhou Jia', 'Creative Studio 203', 2, 3, 4, 'lavender'],
+  ['Python Programming', 'Wang Yu', 'Computing 405', 2, 7, 8, 'blue'],
+  ['College Physics', 'Prof. Li', 'Science A-105', 3, 1, 2, 'yellow'],
+  ['Calculus A', 'Chen Ming', 'Science A-302', 3, 5, 6, 'sage'],
+  ['College English', 'Lin Yue', 'Humanities B-201', 4, 3, 4, 'peach'],
+  ['PE · Badminton', 'Zhang Fan', 'Sports Hall 2', 4, 7, 8, 'rose'],
+  ['Python Programming', 'Wang Yu', 'Computing 405', 5, 1, 2, 'blue'],
+  ['Design Thinking', 'Zhou Jia', 'Creative Studio 203', 5, 5, 6, 'lavender'],
 ].map(([name, teacher, room, day, start, end, color], i) => ({
   id: `demo-${i}`,
   name: String(name),
@@ -80,7 +76,7 @@ export const SAMPLE_COURSES: Course[] = [
 export function parseWeeks(
   input: string,
   max = 30,
-  locale: Locale = 'zh-CN',
+  locale: Locale = 'en',
 ): number[] {
   const t = createTranslator(locale);
   let source = input
@@ -95,21 +91,21 @@ export function parseWeeks(
     .replace(/第|周|\s/g, '');
   const parity = /单/.test(source) ? 1 : /双/.test(source) ? 0 : null;
   if (/单/.test(source) && /双/.test(source))
-    throw new Error(t('请分别填写单周或双周'));
+    throw new Error(t('ui.chooseEitherOddOrEvenWeeks'));
   source = source.replace(/[单双()（）]/g, '');
   const numbers = new Set<number>();
-  if (!source) throw new Error(t('请填写上课周次，例如 1-16'));
+  if (!source) throw new Error(t('ui.enterTeachingWeeksEG116'));
   for (const part of source.split(',')) {
     const match = /^(\d+)(?:-(\d+))?$/.exec(part);
-    if (!match) throw new Error(t('周次格式应为 1-16、1,3,5 或 1-16(单)'));
+    if (!match) throw new Error(t('ui.use116135Or116'));
     const from = Number(match[1]),
       to = Number(match[2] || match[1]);
     if (from < 1 || to > max || from > to)
-      throw new Error(t('周次应在 1-{0} 之间', { 0: max }));
+      throw new Error(t('ui.weeksMustBeBetween1And', { 0: max }));
     for (let n = from; n <= to; n++)
       if (parity === null || n % 2 === parity) numbers.add(n);
   }
-  if (!numbers.size) throw new Error(t('所选周次中没有符合条件的上课周'));
+  if (!numbers.size) throw new Error(t('ui.noTeachingWeeksMatchThisSelection'));
   return [...numbers].sort((a, b) => a - b);
 }
 export function formatWeeks(weeks: number[]): string {
@@ -129,93 +125,220 @@ export function localDate(date: Date): string {
 }
 export function dateAtWeek(settings: Settings, week: number, day = 1): Date {
   const date = new Date(`${settings.startDate}T12:00:00`);
-  date.setDate(date.getDate() + (week - 1) * 7 + day - 1);
+  date.setDate(
+    date.getDate() - ((date.getDay() + 6) % 7) + (week - 1) * 7 + day - 1,
+  );
   return date;
 }
+export function weekElapsedPercent(
+  settings: Settings,
+  week: number,
+  now: Date,
+) {
+  const monday = dateAtWeek(settings, week);
+  monday.setHours(0, 0, 0, 0);
+  const start = Math.max(+monday, +new Date(`${settings.startDate}T00:00:00`));
+  const end = new Date(monday);
+  end.setDate(end.getDate() + 7);
+  return Math.max(
+    0,
+    Math.min(100, Math.floor(((+now - start) / (+end - start)) * 100)),
+  );
+}
 export function currentWeek(settings: Settings, now = new Date()): number {
-  const start = new Date(`${settings.startDate}T00:00:00`);
+  if (localDate(now) < settings.startDate) return 0;
+  const start = dateAtWeek(settings, 1);
+  start.setHours(0, 0, 0, 0);
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   return (
     Math.floor(Math.round((today.getTime() - start.getTime()) / 86400000) / 7) +
     1
   );
 }
-export function conflicts(course: Course, courses: Course[]): Course[] {
+export function courseOccursInWeek(
+  course: Course,
+  settings: Settings,
+  week: number,
+): boolean {
+  return (
+    week >= 1 &&
+    week <= settings.totalWeeks &&
+    course.weeks.includes(week) &&
+    localDate(dateAtWeek(settings, week, course.day)) >= settings.startDate
+  );
+}
+export function parseCourseTiming(
+  startInput: string,
+  endInput: string,
+  locale: Locale = 'en',
+  maxPeriods = DEFAULT_SETTINGS.periods.length,
+): Required<CourseTiming> {
+  const t = createTranslator(locale);
+  const start = startInput.trim(),
+    end = endInput.trim();
+  if (/^\d+$/.test(start) && /^\d+$/.test(end)) {
+    const first = Number(start),
+      last = Number(end);
+    if (first < 1 || last > maxPeriods || first > last)
+      throw new Error(t('timing.periodRangeError', { 0: maxPeriods }));
+    return { timing: 'period', start: first, end: last };
+  }
+  const clock = /^(?:[01]?\d|2[0-3]):[0-5]\d$/;
+  if (clock.test(start) && clock.test(end)) {
+    const first = start.padStart(5, '0'),
+      last = end.padStart(5, '0');
+    if (first >= last) throw new Error(t('timing.endAfterStart'));
+    return { timing: 'time', start: first, end: last };
+  }
+  throw new Error(t('timing.invalidPair', { 0: maxPeriods }));
+}
+export function courseClock(
+  course: Course,
+  settings: Settings = DEFAULT_SETTINGS,
+) {
+  return course.timing === 'time'
+    ? { start: course.start, end: course.end }
+    : {
+        start: settings.periods[course.start - 1]?.start || '',
+        end: settings.periods[course.end - 1]?.end || '',
+      };
+}
+export function compareCourses(a: Course, b: Course, settings: Settings) {
+  if (a.day !== b.day) return a.day - b.day;
+  const first = courseClock(a, settings).start,
+    second = courseClock(b, settings).start;
+  if (first && second) return first.localeCompare(second);
+  if (isPeriodCourse(a) && isPeriodCourse(b)) return a.start - b.start;
+  return Number(isPeriodCourse(a)) - Number(isPeriodCourse(b));
+}
+export function courseOverlap(
+  course: Course,
+  other: Course,
+  settings?: Settings,
+): boolean | undefined {
+  if (
+    course.id === other.id ||
+    course.day !== other.day ||
+    !other.weeks.some(
+      (week) =>
+        course.weeks.includes(week) &&
+        (!settings || courseOccursInWeek(course, settings, week)),
+    )
+  )
+    return false;
+  if (isPeriodCourse(course) && isPeriodCourse(other))
+    return other.start <= course.end && other.end >= course.start;
+  const a = courseClock(course, settings),
+    b = courseClock(other, settings);
+  if (!a.start || !a.end || !b.start || !b.end) return undefined;
+  return a.start < b.end && b.start < a.end;
+}
+export function conflicts(
+  course: Course,
+  courses: Course[],
+  settings?: Settings,
+): Course[] {
   return courses.filter(
-    (other) =>
-      other.id !== course.id &&
-      other.day === course.day &&
-      other.start <= course.end &&
-      other.end >= course.start &&
-      other.weeks.some((w) => course.weeks.includes(w)),
+    (other) => courseOverlap(course, other, settings) === true,
+  );
+}
+export function unresolvedConflicts(
+  course: Course,
+  courses: Course[],
+  settings?: Settings,
+): Course[] {
+  return courses.filter(
+    (other) => courseOverlap(course, other, settings) === undefined,
   );
 }
 export function validateCourse(
   course: Course,
   totalWeeks = 30,
-  locale: Locale = 'zh-CN',
+  locale: Locale = 'en',
+  maxPeriods = DEFAULT_SETTINGS.periods.length,
 ): void {
   const t = createTranslator(locale);
   if (!course.name?.trim() || course.name.length > 100)
-    throw new Error(t('课程名称必填，且不能超过 100 字'));
+    throw new Error(t('ui.enterACourseNameOfNoMoreThan100'));
   if (!Number.isInteger(course.day) || course.day < 1 || course.day > 7)
-    throw new Error(t('星期应在 1-7 之间'));
-  if (
+    throw new Error(t('ui.dayMustBeBetween1MondayAnd7Sunday'));
+  if (course.timing === 'time') {
+    if (
+      !/^([01]\d|2[0-3]):[0-5]\d$/.test(course.start) ||
+      !/^([01]\d|2[0-3]):[0-5]\d$/.test(course.end) ||
+      course.start >= course.end
+    )
+      throw new Error(t('timing.invalidPair', { 0: maxPeriods }));
+  } else if (
+    (course.timing !== undefined && course.timing !== 'period') ||
     ![course.start, course.end].every(Number.isInteger) ||
     course.start < 1 ||
-    course.end > 12 ||
+    course.end > maxPeriods ||
     course.start > course.end
-  )
-    throw new Error(t('节次应在 1-12 之间，结束节次不能早于开始节次'));
+  ) {
+    throw new Error(t('timing.periodRangeError', { 0: maxPeriods }));
+  }
   if (
     !Array.isArray(course.weeks) ||
     !course.weeks.length ||
     course.weeks.some((w) => !Number.isInteger(w) || w < 1 || w > totalWeeks)
   )
-    throw new Error(t('周次应在 1-{0} 之间', { 0: totalWeeks }));
-  if (!COLORS.includes(course.color)) throw new Error(t('无效的课程颜色'));
+    throw new Error(t('ui.weeksMustBeBetween1And', { 0: totalWeeks }));
+  if (!COLORS.includes(course.color))
+    throw new Error(t('ui.invalidCourseColor'));
   if (
     [course.teacher, course.room, course.note].some(
       (v) => typeof v !== 'string',
     )
   )
-    throw new Error(t('无效的课程信息'));
+    throw new Error(t('ui.invalidCourseDetails'));
 }
 export function validateSettings(
   settings: Settings,
-  locale: Locale = 'zh-CN',
+  locale: Locale = 'en',
 ): void {
   const t = createTranslator(locale);
-  if (!settings.semester?.trim()) throw new Error(t('请输入学期名称'));
+  if (!settings.semester?.trim()) throw new Error(t('ui.enterASemesterName'));
   if (
     !/^\d{4}-\d{2}-\d{2}$/.test(settings.startDate) ||
     Number.isNaN(new Date(settings.startDate + 'T12:00:00').getTime()) ||
-    localDate(new Date(settings.startDate + 'T12:00:00')) !==
-      settings.startDate ||
-    new Date(settings.startDate + 'T12:00:00').getDay() !== 1
+    localDate(new Date(settings.startDate + 'T12:00:00')) !== settings.startDate
   )
-    throw new Error(t('开学日期请选择第一周的周一'));
+    throw new Error(t('settings.invalidStartDate'));
   if (
     !Number.isInteger(settings.totalWeeks) ||
     settings.totalWeeks < 1 ||
     settings.totalWeeks > 30
   )
-    throw new Error(t('学期长度应在 1-30 周之间'));
-  if (!Array.isArray(settings.periods) || settings.periods.length !== 12)
-    throw new Error(t('请设置 12 节课的时间'));
-  let last = '00:00';
+    throw new Error(t('ui.semesterLengthMustBeBetween1And30Weeks'));
+  if (
+    !Array.isArray(settings.periods) ||
+    settings.periods.length < 1 ||
+    settings.periods.length > MAX_PERIODS
+  )
+    throw new Error(t('settings.invalidPeriodCount', { 0: MAX_PERIODS }));
+  let last = '';
   for (const period of settings.periods) {
     if (
-      !/^([01]\d|2[0-3]):[0-5]\d$/.test(period.start) ||
-      !/^([01]\d|2[0-3]):[0-5]\d$/.test(period.end) ||
-      period.start >= period.end ||
-      period.start < last
+      !period ||
+      [period.start, period.end].some(
+        (value) =>
+          typeof value !== 'string' ||
+          (value !== '' && !/^([01]\d|2[0-3]):[0-5]\d$/.test(value)),
+      )
     )
-      throw new Error(t('上课时间需按先后排列，且不能重叠'));
-    last = period.end;
+      throw new Error(t('settings.invalidTime'));
+    if (period.start && period.end && period.start >= period.end)
+      throw new Error(t('ui.classTimesMustBeInChronologicalOrderAndCannot'));
+    for (const value of [period.start, period.end]) {
+      if (!value) continue;
+      if (last && value < last)
+        throw new Error(t('ui.classTimesMustBeInChronologicalOrderAndCannot'));
+      last = value;
+    }
   }
 }
-export function decodeSaved(raw: string, locale: Locale = 'zh-CN'): SavedData {
+export function decodeSaved(raw: string, locale: Locale = 'en'): SavedData {
   const t = createTranslator(locale);
   const data = JSON.parse(raw) as SavedData;
   if (
@@ -223,13 +346,18 @@ export function decodeSaved(raw: string, locale: Locale = 'zh-CN'): SavedData {
     !Array.isArray(data.courses) ||
     typeof data.isDemo !== 'boolean'
   )
-    throw new Error(t('不支持的数据格式'));
+    throw new Error(t('ui.unsupportedDataFormat'));
   validateSettings(data.settings, locale);
   const ids = new Set<string>();
   for (const course of data.courses) {
-    validateCourse(course, data.settings.totalWeeks, locale);
+    validateCourse(
+      course,
+      data.settings.totalWeeks,
+      locale,
+      data.settings.periods.length,
+    );
     if (typeof course.id !== 'string' || !course.id || ids.has(course.id))
-      throw new Error(t('课程编号重复或缺失'));
+      throw new Error(t('ui.courseIdsAreMissingOrDuplicated'));
     ids.add(course.id);
   }
   return data;

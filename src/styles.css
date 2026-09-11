@@ -212,15 +212,8 @@ nav > button:hover,
 nav > button.active {
   background: var(--accent);
   color: var(--accent-ink);
-  box-shadow: 0 3px 8px #659ccc16;
+  box-shadow: none;
   font-weight: 500;
-}
-.nav-indicator {
-  width: 5px;
-  height: 5px;
-  background: #4f88b3;
-  border-radius: 50%;
-  margin-left: auto;
 }
 .nav-count {
   font-size: 10px;
@@ -491,12 +484,11 @@ h1 {
   background: var(--accent);
   color: var(--accent-ink);
   border: 1px solid #9ccdec;
-  box-shadow: 0 3px 0 #8fc3e542;
+  box-shadow: none;
 }
 .button.primary:hover:not(:disabled) {
   background: var(--accent-hover);
-  box-shadow: 0 4px 10px #719fc529;
-  transform: translateY(-1px);
+  box-shadow: none;
 }
 .button.secondary {
   background: #fff;
@@ -678,7 +670,7 @@ h1 {
 .view-switch > button.active {
   background: white;
   color: #35566e;
-  box-shadow: 0 1px 4px #28475e12;
+  box-shadow: none;
 }
 .schedule-subtoolbar {
   display: flex;
@@ -1028,20 +1020,6 @@ h1 {
   line-height: 2;
   letter-spacing: 1px;
   color: #587589;
-}
-.weekend-empty > button {
-  display: grid;
-  place-items: center;
-  border: 1px dashed #d7e2ea;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  pointer-events: auto;
-  color: #52758e;
-}
-.weekend-empty > button:hover {
-  background: #d7e7f2;
-  color: #37617f;
 }
 .schedule-footer {
   min-height: 42px;

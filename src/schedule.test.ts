@@ -1,3 +1,4 @@
+import { TIMED_SETTINGS } from './testFixtures';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import ExcelJS from 'exceljs';
@@ -108,10 +109,13 @@ test('import reports original row numbers and missing headers', () => {
   );
   assert.equal(result.courses.length, 1);
   assert.equal(result.rows, 4);
-  assert.match(result.errors[0], /^第 4 行/);
+  assert.match(result.errors[0], /^Row 4:/);
   assert.equal(result.errors.length, 3);
-  assert.throws(() => parseRows([['课程名称'], ['Math']], 20), /缺少必需列/);
-  assert.throws(() => parseRows([HEADERS], 20), /只有表头/);
+  assert.throws(
+    () => parseRows([['课程名称'], ['Math']], 20),
+    /Missing required columns/,
+  );
+  assert.throws(() => parseRows([HEADERS], 20), /only has headers/);
 });
 test('multiple meetings of the same course use a consistent color', () => {
   const result = parseRows(
@@ -154,7 +158,7 @@ test('CSV with BOM, commas and quoted newlines parses correctly', async () => {
   assert.equal(result.courses[0].note, 'Line 1\nLine 2');
   await assert.rejects(
     () => readImport(new File(['invalid'], 'legacy.xls'), 20),
-    /旧版/,
+    /legacy/,
   );
 });
 test('saved data validates schema and rejects corrupt or duplicate courses', () => {
@@ -175,23 +179,44 @@ test('saved data validates schema and rejects corrupt or duplicate courses', () 
           courses: [SAMPLE_COURSES[0], SAMPLE_COURSES[0]],
         }),
       ),
-    /重复/,
+    /duplicated/,
   );
 });
 test('settings prevent invalid semester boundaries and overlapping class times', () => {
   assert.doesNotThrow(() => validateSettings(DEFAULT_SETTINGS));
-  assert.throws(
-    () => validateSettings({ ...DEFAULT_SETTINGS, startDate: '2026-09-08' }),
-    /周一/,
+  assert.doesNotThrow(() =>
+    validateSettings({ ...DEFAULT_SETTINGS, startDate: '2026-09-08' }),
   );
   assert.throws(
     () => validateSettings({ ...DEFAULT_SETTINGS, startDate: '2026-02-30' }),
-    /周一/,
+    /valid first day/,
   );
   assert.throws(() =>
     validateSettings({ ...DEFAULT_SETTINGS, totalWeeks: 31 }),
   );
-  const settings = structuredClone(DEFAULT_SETTINGS);
+  const settings = structuredClone(TIMED_SETTINGS);
   settings.periods[1].start = '08:30';
-  assert.throws(() => validateSettings(settings), /不能重叠/);
+  assert.throws(() => validateSettings(settings), /cannot overlap/);
+});
+
+test('daily times allow blanks while validating every filled value and ordering', () => {
+  const settings = structuredClone(DEFAULT_SETTINGS);
+  assert.doesNotThrow(() => validateSettings(settings));
+  settings.periods[0].start = '08:00';
+  settings.periods[2].end = '10:45';
+  assert.doesNotThrow(() => validateSettings(settings));
+  settings.periods[3].start = '10:00';
+  assert.throws(() => validateSettings(settings), /cannot overlap/);
+  settings.periods[3].start = '25:00';
+  assert.throws(() => validateSettings(settings), /valid time/);
+  settings.periods[3].start = '11:00';
+  settings.periods[3].end = '11:00';
+  assert.throws(() => validateSettings(settings), /cannot overlap/);
+  const raw = JSON.stringify({
+    version: 1,
+    isDemo: false,
+    courses: SAMPLE_COURSES,
+    settings: TIMED_SETTINGS,
+  });
+  assert.deepEqual(decodeSaved(raw).settings.periods, TIMED_SETTINGS.periods);
 });

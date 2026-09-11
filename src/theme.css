@@ -23,7 +23,7 @@
 .theme-switch button[aria-pressed='true'] {
   background: var(--accent);
   color: var(--accent-ink);
-  box-shadow: 0 1px 4px #142a4220;
+  box-shadow: none;
 }
 @media (max-width: 1100px) {
   .today-date {
@@ -328,27 +328,27 @@
   opacity: 0.9;
 }
 [data-theme='dark'] .sage {
-  background: #304635;
+  background: #42624a;
   color: #d0e7bc;
 }
 [data-theme='dark'] .peach {
-  background: #503b30;
+  background: #725342;
   color: #ffd2ae;
 }
 [data-theme='dark'] .lavender {
-  background: #403953;
+  background: #5c5076;
   color: #e2cef7;
 }
 [data-theme='dark'] .blue {
-  background: #29455e;
+  background: #3b6387;
   color: #c6e5ff;
 }
 [data-theme='dark'] .yellow {
-  background: #49432b;
+  background: #69613c;
   color: #f3e5a6;
 }
 [data-theme='dark'] .rose {
-  background: #503744;
+  background: #734f62;
   color: #f9c9da;
 }
 [data-theme='dark'] .color-swatch.selected {

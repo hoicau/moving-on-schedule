@@ -23,15 +23,21 @@
 
 ## i18n
 
-`src/messages.ts` 以简体中文为源文案，保存 English 与繁体翻译。通过 `useI18n().t` 使用完整句子和 `{0}` 形式的参数，不对用户输入检查字典。`src/i18n.ts` 负责语言匹配、插值和 `Intl` 日期格式；`src/LocaleProvider.tsx` 管理独立的 `moving-on-schedule.locale` 偏好，不修改课表或主题数据。`src/locale.css` 适配较长文案。
+`src/messages.ts` 以 English 为源文案，通过稳定语义 key 保存简体与繁体翻译；缺失翻译时回退 English。通过 `useI18n().t` 使用完整句子和 `{0}` 形式的参数，不对用户输入检查字典。`src/demoText.ts` 仅处理内置示例文案，并兼容旧版示例文本。`src/i18n.ts` 负责语言匹配、插值和 `Intl` 日期格式；`src/LocaleProvider.tsx` 管理独立的 `moving-on-schedule.locale` 偏好，不修改课表或主题数据。`src/locale.css` 适配较长文案。标准 locale 为 `en`、`zh-Hans`、`zh-Hant`，provider 自动迁移旧的 `zh-CN` / `zh-TW` 语言偏好。
 
-导入和校验函数接受可选 locale，默认维持 `zh-CN`，兼容已有调用。可接受的文件格式不随界面语言改变。`src/i18n.test.ts` 校验占位符、语言变体、混合语言输入及真实 Excel 往返。新增语言时同步更新语言列表、字典、测试和响应式检查。
+导入和校验函数接受可选 locale，默认使用 `en`。可接受的文件格式不随界面语言改变。`src/i18n.test.ts` 校验占位符、语言变体、混合语言输入及真实 Excel 往返。新增语言时同步更新语言列表、字典、测试和响应式检查。
 
 ## 验证
 
 修改行为后运行 `npm test` 和 `npm run build`。测试覆盖周次表达式、日期边界、冲突、表头和数据行、同名课程配色、XLSX/CSV 解析、存储数据、设置校验、语言匹配、翻译和多语言 Excel 往返。
 
 界面变更还需检查桌面与手机布局、课程增删改、周次过滤、文件导入导出和刷新保存。Excel 模块按需加载，生产构建中较大的 chunk 可能触发 Vite 体积提示。
+
+## 首页行为
+
+`src/occurrences.ts` 独立于浏览周次计算当前与下一次课程，保留同时发生的课程。作息支持留空和部分填写：仍可识别过去的日期，今日时间不完整的课程会明确提示。新设置默认包含 12 组空白时间，可配置为 1–30 节；表单、存储和导入均按实际节数校验。`dateAtWeek` 以周一为每周基准，`courseOccursInWeek` 排除实际开学日之前的课程，支持不足七天的首周。课程时间采用 discriminated union：旧版数字 `start`/`end`（`timing: "period"` 可省略），或带 `timing: "time"` 的标准 `HH:mm` 字符串。`parseCourseTiming` 校验表单及导入的合并输入；缺少作息时，`courseOverlap` 对混合类型的冲突判断返回未知。按时间安排的课程在周课表中使用独立区域。`src/useNow.ts` 在分钟边界、获得焦点和页面可见性变化时刷新。
+
+`src/ComingUp.tsx` 展示时间线（三条安排及所有近期候选），`src/WeekJourney.tsx` 展示侧栏所选周的时间进度，`src/MascotCard.tsx` 保留原兔子插画。`src/home.css` 管理紧凑首页、课表参照、课程详情与显示菜单。`src/displayPreferences.ts` 定义独立的 `moving-on-schedule.display` 偏好（`showRemarks: false`、`showWeekend: true`）。为兼容旧数据，课程存储字段仍为 `note`；英文界面使用 Remark，导出表头使用 `remark`，导入继续兼容旧别名。
 
 ## 存储变更
 

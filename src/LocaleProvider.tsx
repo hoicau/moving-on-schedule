@@ -10,7 +10,7 @@ import {
   createTranslator,
   detectLocale,
   formatDate,
-  isLocale,
+  normalizeLocale,
   LOCALE_KEY,
   weekdays,
   type Locale,
@@ -19,7 +19,8 @@ import {
 function initialLocale(): Locale {
   try {
     const saved = localStorage.getItem(LOCALE_KEY);
-    if (isLocale(saved)) return saved;
+    const normalized = normalizeLocale(saved);
+    if (normalized) return normalized;
   } catch {
     /* Language switching still works without persistent storage. */
   }
@@ -27,6 +28,16 @@ function initialLocale(): Locale {
 }
 function useLocaleState() {
   const [locale, setLocale] = useState(initialLocale);
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(LOCALE_KEY);
+      const normalized = normalizeLocale(saved);
+      if (normalized && normalized !== saved)
+        localStorage.setItem(LOCALE_KEY, normalized);
+    } catch {
+      /* Keep the selected language even when persistence is unavailable. */
+    }
+  }, [locale]);
   const value = useMemo(
     () => ({
       locale,
@@ -49,7 +60,7 @@ function useLocaleState() {
   );
   useEffect(() => {
     document.documentElement.lang = locale;
-    document.title = `Moving-on Schedule · ${value.t('我的课表')}`;
+    document.title = `Moving-on Schedule · ${value.t('schedule.title')}`;
   }, [locale, value]);
   useEffect(() => {
     const sync = (event: StorageEvent) => {

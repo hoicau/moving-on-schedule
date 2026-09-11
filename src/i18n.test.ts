@@ -1,41 +1,50 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
-import { createTranslator, detectLocale, LOCALES, weekdays } from './i18n';
-import { messages } from './messages';
+import {
+  createTranslator,
+  detectLocale,
+  normalizeLocale,
+  LOCALES,
+  weekdays,
+} from './i18n';
+import { en, translations } from './messages';
+import { localizeDemoText } from './demoText';
 import { createWorkbook, headersFor, parseRows, readImport } from './importer';
 import { SAMPLE_COURSES, parseWeeks } from './schedule';
 
 test('language detection honors browser priority, script, and regional variants', () => {
   for (const [languages, expected] of [
     [['en-GB'], 'en'],
-    [['zh-SG'], 'zh-CN'],
-    [['zh-HK'], 'zh-TW'],
-    [['zh-MO'], 'zh-TW'],
-    [['zh-Hant'], 'zh-TW'],
-    [['zh-Hans-HK'], 'zh-CN'],
-    [['fr', 'zh-TW', 'en'], 'zh-TW'],
-    [['de'], 'zh-CN'],
-    [[], 'zh-CN'],
+    [['zh-SG'], 'zh-Hans'],
+    [['zh-HK'], 'zh-Hant'],
+    [['zh-MO'], 'zh-Hant'],
+    [['zh-Hant'], 'zh-Hant'],
+    [['zh-Hans-HK'], 'zh-Hans'],
+    [['fr', 'zh-Hant', 'en'], 'zh-Hant'],
+    [['de'], 'en'],
+    [[], 'en'],
   ] as const)
     assert.equal(detectLocale(languages), expected);
   assert.equal(weekdays('en')[0], 'Mon');
-  assert.equal(weekdays('zh-TW')[0], '週一');
+  assert.equal(weekdays('zh-Hant')[0], '週一');
 });
 
 test('translations preserve interpolation tokens and literal user content', () => {
   const placeholders = (s: string) =>
     [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();
-  for (const [key, values] of Object.entries(messages)) {
-    for (const value of values) {
+  for (const [key, source] of Object.entries(en)) {
+    assert.doesNotMatch(source, /[\u3400-\u9fff]/, key);
+    for (const catalog of Object.values(translations)) {
+      assert.deepEqual(Object.keys(catalog).sort(), Object.keys(en).sort());
+      const value = catalog[key as keyof typeof en];
       assert.ok(value.trim(), key);
-      assert.deepEqual(placeholders(value), placeholders(key), key);
+      assert.deepEqual(placeholders(value), placeholders(source), key);
     }
-    assert.doesNotMatch(values[0], /[\u3400-\u9fff]/, key);
   }
   const text = '<script> $& {1} 大学英语';
   assert.equal(
-    createTranslator('en')('第 {0} 行：{1}', { 0: 4, 1: text }),
+    createTranslator('en')('import.rowError', { 0: 4, 1: text }),
     `Row 4: ${text}`,
   );
   for (const name of [
@@ -46,7 +55,7 @@ test('translations preserve interpolation tokens and literal user content', () =
   ]) {
     const source = readFileSync(new URL(name, import.meta.url), 'utf8');
     for (const match of source.matchAll(/\bt\(\s*(['"])(.*?)\1/gs)) {
-      assert.ok(Object.hasOwn(messages, match[2]), `${name}: ${match[2]}`);
+      assert.ok(Object.hasOwn(en, match[2]), `${name}: ${match[2]}`);
     }
   }
 });
@@ -70,7 +79,7 @@ test('all three week notations work independently of the interface language', ()
     () => parseWeeks('1-21', 20, 'en'),
     /Weeks must be between 1 and 20/,
   );
-  assert.throws(() => parseWeeks('1-21', 20, 'zh-TW'), /週次應在/);
+  assert.throws(() => parseWeeks('1-21', 20, 'zh-Hant'), /週次應在/);
 });
 
 test('localized Excel templates and exports round-trip without translating course data', async () => {
@@ -139,10 +148,47 @@ test('import accepts traditional aliases and localizes row errors and missing he
     /Missing required columns: day, start, end, weeks/,
   );
   const traditional = parseRows(
-    [headersFor('zh-TW'), ['名稱', '週一', 2, 1, '1-2']],
+    [headersFor('zh-Hant'), ['名稱', '週一', 2, 1, '1-2']],
     20,
     'CSV',
-    'zh-TW',
+    'zh-Hant',
   );
   assert.match(traditional.errors[0], /^第 2 列：節次/);
+});
+
+test('missing translations fall back to English and built-in demo aliases remain compatible', () => {
+  const catalog = translations['zh-Hant'];
+  const saved = catalog['course.remark'];
+  try {
+    Reflect.deleteProperty(catalog, 'course.remark');
+    assert.equal(createTranslator('zh-Hant')('course.remark'), 'Remark');
+    assert.equal(createTranslator('zh-Hans')('toString'), 'toString');
+  } finally {
+    catalog['course.remark'] = saved;
+  }
+  assert.equal(localizeDemoText('高等数学 A', 'en'), 'Calculus A');
+  assert.equal(localizeDemoText('Calculus A', 'zh-Hant'), '高等數學 A');
+});
+
+test('new remark header and legacy note headers preserve the same user content', () => {
+  for (const header of ['remark', 'remarks', 'note', 'notes', '备注', '備註']) {
+    const result = parseRows(
+      [
+        ['name', 'day', 'start', 'end', 'weeks', header],
+        ['Calculus', 'Mon', 1, 2, '1-2', 'Bring notes $& {0}'],
+      ],
+      20,
+    );
+    assert.deepEqual(result.errors, []);
+    assert.equal(result.courses[0].note, 'Bring notes $& {0}');
+  }
+  assert.equal(headersFor('en').at(-1), 'remark');
+});
+
+test('legacy saved locales normalize to script tags', () => {
+  assert.equal(normalizeLocale('zh-CN'), 'zh-Hans');
+  assert.equal(normalizeLocale('zh-TW'), 'zh-Hant');
+  for (const locale of LOCALES) assert.equal(normalizeLocale(locale), locale);
+  assert.equal(normalizeLocale('fr'), undefined);
+  assert.equal(normalizeLocale(null), undefined);
 });

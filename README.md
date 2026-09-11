@@ -10,13 +10,13 @@ The button deploys to Cloudflare Workers Static Assets. [Deployment guide](docs/
 
 ## Features
 
-- English, Simplified Chinese, and Traditional Chinese UI, with localized templates and saved language preference.
+- English, Simplified Chinese, and Traditional Chinese UI, with English as the base/fallback language, localized templates, and saved language preference.
 - Light, dark, and system appearance modes, with a saved preference.
 - Responsive week and list views, course search, and optional weekends.
-- Add, edit, and delete classes with custom colors, rooms, teachers, and notes.
-- Schedule consecutive, selected, odd, or even teaching weeks; see time conflicts.
+- Add, edit, and delete classes with custom colors, rooms, teachers, and remarks; optional home-page remark display.
+- Schedule by period number or 24-hour clock time; support consecutive, selected, odd, or even teaching weeks and conflict checks.
 - Import `.xlsx` / UTF-8 `.csv` with validation and preview; download templates and export courses.
-- Customize semester dates and class times, with automatic browser storage.
+- Customize semester dates and optional class times (blank by default), with automatic browser storage.
 
 ## Quick start
 
