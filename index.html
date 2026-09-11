@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#b8dfff" />
+    <style>
+      html {
+        background: #f6faff;
+        color-scheme: light;
+      }
+      html[data-theme='dark'] {
+        background: #111e2d;
+        color-scheme: dark;
+      }
+    </style>
+    <script>
+      // Resolve before first paint; keep the key in sync with src/useTheme.ts.
+      (() => {
+        let preference = 'system';
+        try {
+          const saved = localStorage.getItem('moving-on-schedule.theme');
+          if (saved === 'light' || saved === 'dark') preference = saved;
+        } catch {}
+        const theme =
+          preference === 'system'
+            ? matchMedia('(prefers-color-scheme: dark)').matches
+              ? 'dark'
+              : 'light'
+            : preference;
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.style.colorScheme = theme;
+        document
+          .querySelector('meta[name="theme-color"]')
+          .setAttribute('content', theme === 'dark' ? '#111e2d' : '#b8dfff');
+      })();
+    </script>
+    <meta
+      name="description"
+      content="Moving-on Schedule，新的一周，元气加载！支持 Excel 导入与手动录入的个人课程表。"
+    />
+    <title>Moving-on Schedule · 我的课表</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

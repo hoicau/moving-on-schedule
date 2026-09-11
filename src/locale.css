@@ -1,0 +1,97 @@
+.language-select {
+  max-width: 112px;
+  min-height: 38px;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: #285679;
+  font-size: 11px;
+  cursor: pointer;
+}
+[data-theme='dark'] .language-select {
+  color: #d2e3f2;
+}
+.topbar-right {
+  gap: 10px;
+}
+html[lang='en'] .sidebar-term {
+  min-width: 0;
+}
+html[lang='en'] .sidebar-term > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+html[lang='en'] .period-setting > span:first-child {
+  width: 64px;
+  flex-shrink: 0;
+}
+html[lang='en'] .time-column-heading {
+  font-size: 13px;
+}
+html[lang='en'] .course-card-top {
+  font-size: 7px;
+}
+html[lang='en'] .course-room {
+  white-space: normal;
+}
+html[lang='en'] .week-progress {
+  min-height: 140px;
+  height: auto;
+}
+@media (max-width: 1400px) {
+  .today-date {
+    display: none;
+  }
+}
+@media (max-width: 900px) {
+  .topbar-right .avatar,
+  .topbar-divider {
+    display: none;
+  }
+}
+@media (max-width: 640px) {
+  .breadcrumb > strong {
+    display: none;
+  }
+  .topbar-right {
+    gap: 8px;
+  }
+  .language-select {
+    max-width: 108px;
+  }
+  html[lang='en'] .summary-item {
+    min-width: 0;
+    padding-right: 7px;
+    margin-right: 7px;
+    gap: 5px;
+  }
+  html[lang='en'] .summary-item > div > span {
+    white-space: nowrap;
+    font-size: 7px;
+  }
+  html[lang='en'] .summary-item small {
+    display: block;
+    margin: 4px 0 0;
+    line-height: 1.3;
+  }
+  html[lang='en'] .week-control {
+    gap: 5px;
+  }
+  html[lang='en'] .search-box {
+    flex: 1;
+  }
+  html[lang='en'] .search-box input {
+    width: 100%;
+    min-width: 0;
+  }
+  html[lang='en'] .import-steps {
+    gap: 9px;
+  }
+  html[lang='en'] .import-steps i {
+    width: 25px;
+  }
+  html[lang='en'] .quote-card h3 {
+    font-size: 16px;
+  }
+}

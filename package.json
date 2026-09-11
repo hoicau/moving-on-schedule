@@ -1,0 +1,38 @@
+{
+  "name": "moving-on-schedule",
+  "version": "1.0.0",
+  "description": "A calm, local-first timetable with Excel import and manual course editing.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "test": "node --import tsx --test --test-isolation=none src/*.test.ts",
+    "format": "prettier --write ."
+  },
+  "keywords": [],
+  "type": "module",
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "lucide-react": "^1.44.0",
+    "papaparse": "^5.7.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.2",
+    "@types/papaparse": "^5.5.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "prettier": "^3.9.6",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.0"
+  },
+  "private": true,
+  "overrides": {
+    "exceljs": {
+      "uuid": "11.1.1"
+    }
+  }
+}
