@@ -21,7 +21,7 @@ Locales use `en`, `zh-Hans`, and `zh-Hant`. Previously saved `zh-CN` / `zh-TW` p
 
 Open **Display** above the timetable to toggle **Weekends** and **Show remarks on home**. Both choices are remembered in this browser. Remarks are hidden by default; enabling them shows nonempty remarks in course cards, the list, and Coming up. Long remarks are abbreviated on the home page and always available in full in course details. Hiding remarks never removes their contents.
 
-If weekends are hidden while the viewed week has weekend classes, a visible notice lets you reveal them. The footer **Source code** link opens the GitHub repository.
+If weekends are hidden while the viewed week has weekend classes, a visible notice lets you reveal them. On desktop, the timetable sets the content height; the right-hand cards fit that height, with a shared bottom edge and space below the content. Upcoming entries scroll when needed. The **Source code** link below **Getting started** in the sidebar opens the GitHub repository in a new tab. On mobile, open the navigation menu and scroll to the bottom of the sidebar to reach it.
 
 ## Appearance
 
@@ -73,3 +73,5 @@ Different browsers, devices, ports, and domains have separate storage. To move c
 ## Current scope
 
 The app manages one timetable of recurring weekly classes. Accounts, cloud sync, school-system scraping, push notifications, one-off rescheduling, exams, and multiple timetables are not implemented. Google Fonts is the external font source, with system-font fallback; spreadsheet parsing stays in the browser.
+
+The header language selector and appearance switch share a 40px control height, including on mobile.

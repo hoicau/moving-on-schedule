@@ -34,13 +34,6 @@ export function WeekJourney({
       >
         <span style={{ width: `${progress}%` }} />
       </div>
-      <p>
-        {progress >= 100
-          ? t('schedule.journeyDone')
-          : progress <= 0
-            ? t('schedule.journeyReady')
-            : t('schedule.journeyGoing')}
-      </p>
     </section>
   );
 }

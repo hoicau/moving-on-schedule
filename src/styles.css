@@ -10,8 +10,8 @@
   -moz-osx-font-smoothing: grayscale;
   font-size: 13px;
   font-weight: 400;
-  --accent: #b8dfff;
-  --accent-hover: #a0d3fa;
+  --accent: #d4ebff;
+  --accent-hover: #c2e3ff;
   --accent-ink: #285679;
   --accent-soft: #eaf5ff;
   --muted: #637e95;
@@ -194,7 +194,7 @@ nav {
   gap: 7px;
 }
 nav > button,
-.bottom-nav button {
+.bottom-nav :is(button, a) {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -206,7 +206,7 @@ nav > button,
   font-size: 12px;
 }
 nav > button:hover,
-.bottom-nav button:hover {
+.bottom-nav :is(button, a):hover {
   background: #dce5ec;
 }
 nav > button.active {
@@ -332,11 +332,12 @@ nav > button.active {
 .bottom-nav {
   padding: 0 1px;
 }
-.bottom-nav button {
+.bottom-nav :is(button, a) {
   font-size: 11px;
   padding: 10px 12px;
+  text-decoration: none;
 }
-.bottom-nav button svg:last-child:not(:first-child) {
+.bottom-nav :is(button, a) svg:last-child:not(:first-child) {
   margin-left: auto;
 }
 .local-status {
@@ -388,32 +389,6 @@ nav > button.active {
   display: flex;
   align-items: center;
   gap: 19px;
-}
-.today-date {
-  font-size: 10px;
-  color: #577589;
-}
-.today-date > span {
-  margin-left: 9px;
-  color: #587588;
-}
-.topbar-divider {
-  width: 1px;
-  height: 21px;
-  background: #dde5eb;
-}
-.avatar {
-  width: 31px;
-  height: 31px;
-  background: #d7e4ed;
-  border: 3px solid #edf4f9;
-  outline: 1px solid #d5e0e8;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  font-size: 12px;
-  font-weight: 700;
-  color: #49667b;
 }
 .mobile-menu {
   display: none !important;
@@ -909,9 +884,11 @@ h1 {
   border: 1px solid #ffffff55;
   box-shadow: 0 1px 2px #183a5210;
   position: relative;
+  transition:
+    box-shadow 0.15s,
+    transform 0.15s;
 }
 .course-card:hover {
-  filter: brightness(0.98);
   transform: translateY(-2px);
   box-shadow: 0 3px 7px #1b374b1a;
   z-index: 1;
@@ -954,13 +931,6 @@ h1 {
 }
 .course-card:hover .course-card-top > svg {
   opacity: 1;
-}
-.course-dot {
-  height: 4px;
-  width: 4px;
-  border-radius: 50%;
-  background: currentColor;
-  flex-shrink: 0;
 }
 .course-card > strong {
   font-size: 11px;
@@ -1065,12 +1035,6 @@ h1 {
   border-radius: 50%;
   background: #6b90aa;
   box-shadow: 0 0 0 4px #ebf2f7;
-}
-.rail-description {
-  font-size: 9px;
-  color: #577489;
-  margin-top: 8px;
-  margin-bottom: 23px;
 }
 .upcoming-course {
   display: flex;
@@ -1264,29 +1228,6 @@ h1 {
   margin-top: 2px;
   color: #587489;
 }
-.page-footer {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  padding: 23px 0;
-  color: #587488;
-  font-size: 8px;
-}
-.page-footer > span:first-child {
-  font-size: 9px;
-  font-weight: 600;
-  color: #587488;
-}
-.page-footer > span:nth-child(2) {
-  border-left: 1px solid #d3dfe8;
-  padding-left: 10px;
-  letter-spacing: 1px;
-}
-.page-footer > span:last-child {
-  margin-left: auto;
-  font-size: 6px;
-  letter-spacing: 1.6px;
-}
 .course-list {
   min-height: 500px;
   padding: 0 18px;
@@ -1453,6 +1394,7 @@ h1 {
 .course-form label {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   gap: 8px;
   font-size: 11px;
   color: #536e81;
@@ -1465,6 +1407,7 @@ h1 {
 .course-form select,
 .course-form textarea {
   width: 100%;
+  min-width: 0;
   border: 1px solid #d2dfe9;
   border-radius: 6px;
   background: #fff;
@@ -1472,6 +1415,22 @@ h1 {
   color: #374f60;
   font-size: 12px;
   min-height: 39px;
+}
+.course-form input {
+  line-height: 1.5;
+}
+.course-form input[type='date'] {
+  /* Keep iOS's native date picker inside the same frame as other inputs. */
+  -webkit-appearance: none;
+  appearance: none;
+  height: 40px;
+}
+.course-form input[type='date']::-webkit-date-and-time-value {
+  min-height: 1.5em;
+  text-align: left;
+}
+.course-form input[type='date']::-webkit-datetime-edit {
+  padding: 0;
 }
 .course-form input::placeholder,
 .course-form textarea::placeholder {
@@ -1485,7 +1444,7 @@ h1 {
 }
 .form-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 15px;
 }
 .form-grid.thirds {
@@ -1971,12 +1930,6 @@ h1 {
   .upcoming-date small {
     margin-left: 10px;
   }
-  .upcoming-course:nth-of-type(3) {
-    display: none;
-  }
-  .upcoming-course:nth-of-type(2) .upcoming-timeline > i {
-    display: none;
-  }
 }
 @media (max-width: 900px) {
   .sidebar {
@@ -2072,9 +2025,6 @@ h1 {
   }
   .date-range {
     display: none;
-  }
-  .today-date {
-    font-size: 9px;
   }
   .topbar {
     height: 64px;
@@ -2174,20 +2124,6 @@ h1 {
   }
   .topbar-right {
     gap: 12px;
-  }
-  .today-date {
-    font-size: 8px;
-  }
-  .today-date > span {
-    display: none;
-  }
-  .topbar-divider {
-    display: none;
-  }
-  .avatar {
-    width: 28px;
-    height: 28px;
-    font-size: 11px;
   }
   main {
     padding: 27px 16px 0;
@@ -2333,10 +2269,6 @@ h1 {
   .rail-heading h3 {
     font-size: 12px;
   }
-  .rail-description {
-    font-size: 8px;
-    margin-bottom: 20px;
-  }
   .upcoming-date {
     font-size: 8px;
   }
@@ -2373,16 +2305,6 @@ h1 {
   .rail-footnote > svg {
     width: 12px;
   }
-  .page-footer {
-    font-size: 7px;
-    padding: 22px 1px;
-  }
-  .page-footer > span:first-child {
-    font-size: 8px;
-  }
-  .page-footer > span:last-child {
-    display: none;
-  }
   .modal-backdrop {
     padding: 12px;
   }
@@ -2409,6 +2331,9 @@ h1 {
   .course-form select {
     font-size: 13px;
     min-height: 42px;
+  }
+  .course-form input[type='date'] {
+    height: 44px;
   }
   .course-form label {
     font-size: 10px;

@@ -1,7 +1,23 @@
+.language-control {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+}
+.language-control > svg {
+  position: absolute;
+  right: 9px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--muted);
+}
 .language-select {
+  -webkit-appearance: none;
+  appearance: none;
   max-width: 112px;
-  min-height: 38px;
-  padding: 7px 9px;
+  height: 40px;
+  min-height: 40px;
+  padding: 7px 29px 7px 9px;
   border: 1px solid var(--border);
   border-radius: 10px;
   background: var(--accent-soft);
@@ -38,17 +54,6 @@ html[lang='en'] .course-room {
 html[lang='en'] .week-progress {
   min-height: 140px;
   height: auto;
-}
-@media (max-width: 1400px) {
-  .today-date {
-    display: none;
-  }
-}
-@media (max-width: 900px) {
-  .topbar-right .avatar,
-  .topbar-divider {
-    display: none;
-  }
 }
 @media (max-width: 640px) {
   .breadcrumb > strong {

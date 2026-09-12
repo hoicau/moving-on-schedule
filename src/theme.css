@@ -9,10 +9,14 @@
   background: var(--accent-soft);
 }
 .theme-switch button {
+  -webkit-appearance: none;
+  appearance: none;
   display: grid;
   place-items: center;
+  flex: 0 0 32px;
   width: 32px;
   height: 32px;
+  padding: 0;
   border-radius: 7px;
   color: var(--muted);
 }
@@ -25,15 +29,8 @@
   color: var(--accent-ink);
   box-shadow: none;
 }
-@media (max-width: 1100px) {
-  .today-date {
-    display: none;
-  }
-}
-@media (max-width: 380px) {
-  .topbar-right .avatar {
-    display: none;
-  }
+:root:not([data-theme='dark']) .button.primary {
+  border-color: transparent;
 }
 
 :root[data-theme='dark'] {
@@ -127,7 +124,6 @@
     .rail-link,
     .upcoming-timeline > i,
     .quote-card,
-    .page-footer > span:nth-child(2),
     .course-list-row,
     .course-form input,
     .course-form select,
@@ -144,7 +140,7 @@
 [data-theme='dark'] .break-top {
   border-top-color: var(--border) !important;
 }
-[data-theme='dark'] :is(.sidebar-rule, .topbar-divider, .import-steps i) {
+[data-theme='dark'] :is(.sidebar-rule, .import-steps i) {
   background: var(--border);
 }
 [data-theme='dark'] :is(.brand > span:last-child, h1, .modal h2) {
@@ -177,7 +173,7 @@
     .sidebar-term div > span,
     .nav-label,
     nav > button:not(.active),
-    .bottom-nav button,
+    .bottom-nav :is(button, a),
     .mini-month svg,
     .mini-day,
     .mini-grid button:not(.is-today),
@@ -186,8 +182,6 @@
     .local-status,
     .breadcrumb,
     .breadcrumb > svg,
-    .today-date,
-    .today-date > span,
     .page-heading p,
     .icon-button,
     .summary-item > div > span,
@@ -207,7 +201,6 @@
     .weekend-empty,
     .weekend-empty > span,
     .schedule-footer,
-    .rail-description,
     .upcoming-date,
     .upcoming-room,
     .rail-link,
@@ -218,8 +211,6 @@
     .quote-card p,
     .rail-footnote,
     .rail-footnote svg,
-    .page-footer,
-    .page-footer > span:first-child,
     .list-course-name span,
     .list-course-time span,
     .course-list-row > svg,
@@ -274,7 +265,7 @@
 [data-theme='dark']
   :is(
     nav > button:hover:not(.active),
-    .bottom-nav button:hover,
+    .bottom-nav :is(button, a):hover,
     .icon-button:hover:not(:disabled),
     .this-week:hover,
     .grid-lines > button:hover,
@@ -296,12 +287,6 @@
   background: var(--surface-hover);
   border-color: #648ba9;
 }
-[data-theme='dark'] .avatar {
-  background: #29455e;
-  border-color: #1e3246;
-  outline-color: #42617b;
-  color: #d9edff;
-}
 [data-theme='dark'] .toggle-track {
   background: #526c82;
 }
@@ -320,9 +305,6 @@
 }
 [data-theme='dark'] .course-card {
   border-color: #ffffff12;
-}
-[data-theme='dark'] .course-card:hover {
-  filter: brightness(1.12);
 }
 [data-theme='dark'] :is(.course-card-top, .course-room, .course-teacher) {
   opacity: 0.9;

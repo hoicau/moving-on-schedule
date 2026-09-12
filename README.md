@@ -20,14 +20,14 @@ The button deploys to Cloudflare Workers Static Assets. [Deployment guide](docs/
 
 ## Quick start
 
-Requires Node.js 22.12+ and npm. From the repository root:
+Requires Node.js 24 LTS (pinned in `.node-version`) and npm. From the repository root:
 
 ```sh
 npm ci
 npm run dev
 ```
 
-Open <http://localhost:5173>. Start with the sample timetable, choose **使用空白课表** for a blank schedule, or import a file.
+Open <http://localhost:5173>. Start with the sample timetable, choose **Start fresh** for a blank schedule, or import a file.
 
 ## Documentation
 
@@ -36,3 +36,9 @@ Open <http://localhost:5173>. Start with the sample timetable, choose **使用�
 - [Development and verification](docs/development.md)
 
 Course data stays in the current browser. There are no accounts or cloud sync; export your courses before clearing site data or switching domains. Spreadsheet imports require the documented row format.
+
+## License
+
+Licensed under the [MIT License](LICENSE). Copyright (c) 2026 hoicau.
+
+The GitHub icon comes from [Octicons](https://github.com/primer/octicons) and retains its [MIT license and copyright notice](docs/octicons-LICENSE.txt). Third-party dependencies retain their respective licenses.

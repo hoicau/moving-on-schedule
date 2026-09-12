@@ -1,4 +1,5 @@
 import { localizeDemoText, isDefaultSemester } from './demoText';
+import { GitHubIcon } from './GitHubIcon';
 import {
   courseOccurrence,
   occurrenceIsPast,
@@ -37,6 +38,7 @@ import {
   CalendarDays,
   Check,
   CheckCircle2,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Clock3,
@@ -1029,7 +1031,6 @@ function CourseCard({
       title={`${course.name} · ${course.room} · ${courseTimingLabel(course, t)}`}
     >
       <span className="course-card-top">
-        <span className="course-dot" />
         <span>{courseTimingLabel(course, t)}</span>
         <ArrowUpRight size={12} />
       </span>
@@ -1293,6 +1294,16 @@ export default function App() {
             <HelpCircle size={18} />
             {t('ui.gettingStarted')}
           </button>
+          <a
+            className="sidebar-source"
+            href="https://github.com/hoicau/moving-on-schedule"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <GitHubIcon size={18} />
+            {t('footer.sourceCode')}
+            <ArrowUpRight size={14} aria-hidden="true" />
+          </a>
         </div>
       </aside>
       <div className="workspace">
@@ -1308,26 +1319,29 @@ export default function App() {
             <strong className="header-brand">Moving-on Schedule</strong>
           </div>
           <div className="topbar-right">
-            <select
-              className="language-select"
-              aria-label={t('ui.language')}
-              value={locale}
-              onChange={(event) => {
-                const next = event.target.value as Locale;
-                if (!chooseLocale(next))
-                  notify(
-                    createTranslator(next)(
-                      'ui.languageChangedButThisBrowserCouldNotSaveYour',
-                    ),
-                  );
-              }}
-            >
-              {LOCALES.map((value) => (
-                <option key={value} value={value} lang={value}>
-                  {LOCALE_NAMES[value]}
-                </option>
-              ))}
-            </select>
+            <div className="language-control">
+              <select
+                className="language-select"
+                aria-label={t('ui.language')}
+                value={locale}
+                onChange={(event) => {
+                  const next = event.target.value as Locale;
+                  if (!chooseLocale(next))
+                    notify(
+                      createTranslator(next)(
+                        'ui.languageChangedButThisBrowserCouldNotSaveYour',
+                      ),
+                    );
+                }}
+              >
+                {LOCALES.map((value) => (
+                  <option key={value} value={value} lang={value}>
+                    {LOCALE_NAMES[value]}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown size={14} aria-hidden="true" />
+            </div>
             <div
               className="theme-switch"
               role="group"
@@ -1357,18 +1371,6 @@ export default function App() {
                 </button>
               ))}
             </div>
-            <span className="today-date">
-              {formatDate(now, {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-              })}
-              <span>{DAYS[(now.getDay() + 6) % 7]}</span>
-            </span>
-            <div className="topbar-divider" />
-            <span className="avatar" aria-label={t('ui.yourPersonalPlanner')}>
-              M
-            </span>
           </div>
         </header>
         <main>
@@ -1424,14 +1426,17 @@ export default function App() {
             className={`content-layout ${page === 'schedule' ? 'with-coming-up' : ''}`}
           >
             {page === 'schedule' && (
-              <ComingUp
-                courses={courses}
-                settings={settings}
-                now={now}
-                showRemarks={showRemarks}
-                onSelect={showDetails}
-                onViewAll={() => setPage('courses')}
-              />
+              <div className="schedule-rail">
+                <ComingUp
+                  courses={courses}
+                  settings={settings}
+                  now={now}
+                  showRemarks={showRemarks}
+                  onSelect={showDetails}
+                  onViewAll={() => setPage('courses')}
+                />
+                <MascotCard />
+              </div>
             )}
             <section className="schedule-panel">
               <div className="schedule-toolbar">
@@ -1817,26 +1822,7 @@ export default function App() {
                 </div>
               )}
             </section>
-            {page === 'schedule' && <MascotCard />}
           </div>
-          <footer className="page-footer">
-            <div className="footer-identity">
-              <span>{t('footer.motto')}</span>
-              <span className="footer-source">
-                <span className="footer-divider" aria-hidden="true">
-                  |
-                </span>
-                <a
-                  href="https://github.com/hoicau/moving-on-schedule"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {t('footer.sourceCode')}
-                  <ArrowUpRight size={14} aria-hidden="true" />
-                </a>
-              </span>
-            </div>
-          </footer>
         </main>
       </div>
       {modal === 'detail' && editing && (
@@ -1885,7 +1871,7 @@ export default function App() {
           {unresolvedConflicts(editing, courses, settings).length > 0 && (
             <p className="notice warning">{t('timing.unknownOverlap')}</p>
           )}
-          <div className="modal-actions">
+          <div className="modal-actions course-detail-actions">
             <button className="button primary" onClick={() => edit(editing)}>
               {t('course.edit')}
             </button>

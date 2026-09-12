@@ -1,6 +1,6 @@
 # 开发指南
 
-使用 Node.js 22.12+ 和 npm，通过 `npm ci` 安装锁定版本的依赖。
+使用 Node.js 24 LTS（版本见 `.node-version`）和 npm，通过 `npm ci` 安装锁定版本的依赖。
 
 | 命令              | 用途                                      |
 | ----------------- | ----------------------------------------- |
@@ -44,3 +44,11 @@
 当前存储键为 `moving-on-schedule.v1`，schema 版本为 `1`。调整结构时需校验或迁移旧数据。现有加载器遇到损坏数据会提示，直至后续修改才尝试写入。Excel 导出保留课程字段和周次，不包含学期设置或自定义颜色。
 
 保持中英文 README 与 `docs/` 内容一致。依赖、构建产物、凭据和本地 Wrangler 状态不应提交。
+
+## 依赖维护
+
+`.node-version` 将构建环境固定为 Node 24.21.0 LTS，`package.json` 要求 Node 24 或更新版本。发布前使用固定的 LTS 版本验证。修改版本时，同步更新中英文安装与部署文档，以及托管平台中已有的 `NODE_VERSION` 设置。
+
+截至 2026-09-12，ExcelJS 最新稳定版仍为 4.4.0。它的 Node 端间接依赖会在 `npm ci` 时产生 `lodash.isequal`、`glob`、`inflight`、`fstream` 和 `rimraf` 的弃用提示，这些提示不表示构建失败。目前无法通过兼容的 ExcelJS 升级消除全部提示；不要仅为隐藏警告而强制覆盖跨 major 的依赖版本。保留现有 UUID override，更新锁文件后执行 `npm audit`，并用 `npm test` 和 production build 验证真实 XLSX/CSV 导入导出。本次审计未发现已知漏洞；后续安全公告可能改变审计结果。
+
+参考：[ExcelJS 上游依赖讨论](https://github.com/exceljs/exceljs/discussions/3040)、[Node.js 发布计划](https://github.com/nodejs/Release)。

@@ -8,7 +8,7 @@ Moving-on Schedule 构建为静态站点，平台托管 `dist/` 文件夹，无�
 | -------- | -------------------------------------------- |
 | 根目录   | 仓库根目录                                   |
 | 框架     | React / Vite                                 |
-| Node.js  | Node 22，至少 22.12.0                        |
+| Node.js  | Node 24 LTS（24.21.0）                        |
 | 安装命令 | `npm ci`，或平台支持 lockfile 的默认安装流程 |
 | 构建命令 | `npm run build`                              |
 | 输出目录 | `dist`                                       |
@@ -22,7 +22,7 @@ README 中的按钮打开 Cloudflare **Workers** 部署流程。项目中的 [wr
 0. Fork 仓库后请将 README 按钮中的 `url` 参数更新为自己的公开仓库地址。
 1. 仓库必须公开，并包含应用代码与 Wrangler 配置；按钮无法读取本地未提交的文件。
 2. 点击按钮并登录，选择 Cloudflare 及 Git 平台账号。
-3. 检查仓库名和 Worker 名，构建命令使用 `npm run build`，部署命令使用 `npx wrangler deploy`，Node 版本使用 22.12+。
+3. 检查仓库名和 Worker 名，构建命令使用 `npm run build`，部署命令使用 `npx wrangler deploy`，Node 版本使用 24 LTS。
 4. 完成部署后打开分配的 `workers.dev` 地址，之后可绑定自定义域名。
 
 也可在仓库根目录通过 CLI 手动部署：
@@ -42,7 +42,7 @@ npx wrangler@4 deploy
 
 1. 将项目推送到 GitHub，在 **Workers & Pages** 中创建 **Pages** 项目并连接仓库。
 2. 选择生产分支（`main`）和 `React (Vite)` 预设。
-3. 设置构建环境变量 `NODE_VERSION=22`，保存并部署。
+3. 根目录的 `.node-version` 已固定 Node 24.21.0 LTS。如果项目已配置 `NODE_VERSION` 环境变量，请将 production 和 preview 环境的值都更新为 `24.21.0`，保存并部署。
 4. 使用分配的 `pages.dev` 地址或绑定自定义域名；后续推送到生产分支会触发部署。
 
 Pages 直接使用 `npm run build` 和 `dist`；Workers 配置用于按钮及 Workers 流程。无需 Pages Functions。
@@ -55,8 +55,8 @@ Pages 直接使用 `npm run build` 和 `dist`；Workers 配置用于按钮及 Wo
 
 | 平台    | 设置                                                                                   |
 | ------- | -------------------------------------------------------------------------------------- |
-| Vercel  | 导入 Git 仓库，框架选择 **Vite**，使用上面的构建配置和 Node 22.x。                     |
-| Netlify | 导入 Git 仓库，Base Directory 使用仓库根目录，填写上面的构建与发布配置，选择 Node 22。 |
+| Vercel  | 导入 Git 仓库，框架选择 **Vite**，使用上面的构建配置和 Node 24.x。                     |
+| Netlify | 导入 Git 仓库，Base Directory 使用仓库根目录，填写上面的构建与发布配置，选择 Node 24。 |
 
 两者均支持 Git 自动部署与自定义域名。当前应用没有基于 URL 路径的前端路由；后续增加时，请按平台 SPA 文档配置回退到 `index.html`。
 
@@ -70,4 +70,4 @@ Pages 直接使用 `npm run build` 和 `dist`；Workers 配置用于按钮及 Wo
 - Google Fonts 无法访问时使用系统字体。
 - 按需加载的 Excel 模块可能触发 chunk 较大的构建提示，不影响部署。
 
-文档基于 2026-09-11 版本，前端行为以最新文档为准。
+最后更新：2026-09-12。

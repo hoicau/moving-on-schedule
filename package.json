@@ -1,6 +1,7 @@
 {
   "name": "moving-on-schedule",
   "version": "1.0.0",
+  "license": "MIT",
   "description": "A calm, local-first timetable with Excel import and manual course editing.",
   "scripts": {
     "dev": "vite",
@@ -13,13 +14,13 @@
   "type": "module",
   "dependencies": {
     "exceljs": "^4.4.0",
-    "lucide-react": "^1.44.0",
+    "lucide-react": "^1.45.0",
     "papaparse": "^5.7.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
   },
   "devDependencies": {
-    "@types/node": "^22.20.2",
+    "@types/node": "^24.13.4",
     "@types/papaparse": "^5.5.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
@@ -30,6 +31,9 @@
     "vite": "^8.3.0"
   },
   "private": true,
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "overrides": {
     "exceljs": {
       "uuid": "11.1.1"

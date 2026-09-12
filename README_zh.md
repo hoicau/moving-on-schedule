@@ -21,7 +21,7 @@
 
 ## 快速开始
 
-需要 Node.js 22.12+ 和 npm。在仓库根目录运行：
+需要 Node.js 24 LTS（版本见 `.node-version`）和 npm。在仓库根目录运行：
 
 ```sh
 npm ci
@@ -37,3 +37,9 @@ npm run dev
 - [开发与验证](docs/development_zh.md)
 
 课程数据保存在当前浏览器，暂无账号或云同步。清除站点数据或更换域名前，请先导出课程。表格导入需遵循文档中的逐行格式。
+
+## 许可证
+
+本项目采用 [MIT License](LICENSE)。Copyright (c) 2026 hoicau。
+
+GitHub 图标来自 [Octicons](https://github.com/primer/octicons)，保留其 [MIT 许可与版权声明](docs/octicons-LICENSE.txt)。第三方依赖遵循各自的许可证。

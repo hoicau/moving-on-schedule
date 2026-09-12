@@ -44,7 +44,6 @@ export function ComingUp({
       <div className="rail-heading">
         <h3 id="coming-up-title">{t('schedule.comingUp')}</h3>
       </div>
-      <p className="rail-description">{t('schedule.comingUpHint')}</p>
       {entries.length ? (
         <div className="upcoming-entries">
           {entries.map((entry, index) => {

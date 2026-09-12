@@ -1,6 +1,6 @@
 # Development
 
-Use Node.js 22.12+ and npm. Install locked dependencies with `npm ci`.
+Use Node.js 24 LTS (pinned in `.node-version`) and npm. Install locked dependencies with `npm ci`.
 
 | Command           | Purpose                                             |
 | ----------------- | --------------------------------------------------- |
@@ -44,3 +44,11 @@ For UI changes, also check desktop and mobile layouts; course creation, editing 
 The current key is `moving-on-schedule.v1`, with schema version `1`. Validate or migrate saved data when changing the schema. The existing loader reports malformed data and avoids overwriting it until a subsequent edit. Excel exports preserve course fields and weeks, but not semester settings or custom colors.
 
 Keep the English and Chinese README and `docs/` pages aligned. Do not commit dependencies, build output, credentials, or local Wrangler state.
+
+## Dependency maintenance
+
+The build runtime is pinned to Node 24.21.0 LTS in `.node-version`; `package.json` requires Node 24 or newer. Use the pinned LTS version for release checks. When changing it, update the English and Chinese setup/deployment guides and any hosting `NODE_VERSION` overrides together.
+
+ExcelJS 4.4.0 is the latest stable upstream release checked on 2026-09-12. Its Node-side dependencies still produce deprecation notices for `lodash.isequal`, `glob`, `inflight`, `fstream`, and `rimraf` during `npm ci`. These notices do not mean the build failed. They cannot all be removed by a compatible ExcelJS update today; avoid forcing major dependency overrides just to hide them. Keep the existing UUID override, run `npm audit` after lockfile changes, and verify real XLSX/CSV import/export with `npm test` and a production build. The audit reported no known vulnerabilities on this check; that result may change as advisories are published.
+
+References: [ExcelJS upstream dependency discussion](https://github.com/exceljs/exceljs/discussions/3040), [Node.js release schedule](https://github.com/nodejs/Release).

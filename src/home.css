@@ -7,7 +7,7 @@
 }
 .topbar {
   height: 58px;
-  padding-inline: 24px;
+  padding-inline: 36px;
 }
 main {
   padding: 35px 36px 0;
@@ -30,6 +30,9 @@ main {
   margin-top: 9px;
 }
 @media (min-width: 1580px) {
+  .topbar {
+    padding-inline: max(44px, calc((100% - 1740px) / 2 + 44px));
+  }
   main {
     padding: 40px 44px 0;
   }
@@ -48,7 +51,7 @@ main {
   overflow: visible;
 }
 .schedule-toolbar {
-  padding: 12px;
+  padding: 16px 18px;
   flex-wrap: wrap;
   gap: 10px;
   border-bottom: 1px solid var(--border);
@@ -306,46 +309,9 @@ html[lang='en'] .course-card-top {
   min-height: 200px;
   padding: 24px 8px;
 }
-.page-footer {
-  justify-content: center;
-  gap: 8px;
-  padding: 16px 0;
-  font-size: 12px;
-  flex-wrap: wrap;
-}
-.footer-identity {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  text-align: center;
-  align-items: center;
-  gap: 10px;
-}
-.footer-source {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-}
 .breadcrumb .header-brand {
   font-size: 12px;
   font-weight: 600;
-}
-.footer-divider {
-  opacity: 0.6;
-}
-.page-footer > .demo-badge {
-  margin-left: 0;
-  font-size: 10px;
-  padding: 4px 6px;
-  letter-spacing: 0;
-}
-.page-footer a {
-  margin-left: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  min-height: 32px;
-  text-underline-offset: 3px;
 }
 /* Keep adequate contrast for the pastel course palette. */
 .sage {
@@ -406,9 +372,6 @@ html[lang='en'] .course-card-top {
   }
 }
 @media (max-width: 640px) {
-  .footer-divider {
-    display: none;
-  }
   .sidebar .brand {
     margin-bottom: 35px;
   }
@@ -570,6 +533,9 @@ html[lang='en'] .course-card-top {
 .modal-actions:has(.settings-storage) {
   flex-wrap: wrap;
 }
+.course-detail-actions {
+  border-top: 0;
+}
 
 .course-position {
   --course-top-inset: 5px;
@@ -588,32 +554,14 @@ html[lang='en'] .course-card-top {
   pointer-events: none;
 }
 
-/* Stronger swatches remain distinct from the softer timetable cards. */
+/* Light swatches preview the same pastel palette as the course cards. */
 .color-swatch {
-  border: 2px solid #60717b;
-  color: #172c3d;
-}
-.color-swatch.sage {
-  background: #9cc76b;
-}
-.color-swatch.peach {
-  background: #efab70;
-}
-.color-swatch.lavender {
-  background: #b29bdc;
-}
-.color-swatch.blue {
-  background: #7dbbea;
-}
-.color-swatch.yellow {
-  background: #e8cc60;
-}
-.color-swatch.rose {
-  background: #e59aba;
+  border: 0;
+  padding: 0;
 }
 [data-theme='dark'] .color-swatch {
   color: #172c3d;
-  border-color: #adc2d1;
+  border: 2px solid #adc2d1;
 }
 [data-theme='dark'] .color-swatch.sage {
   background: #9cc76b;
@@ -634,7 +582,7 @@ html[lang='en'] .course-card-top {
   background: #e59aba;
 }
 .color-swatch.selected {
-  outline: 2px solid var(--text);
+  outline: 2px solid #82b5dc;
   outline-offset: 3px;
 }
 
@@ -653,7 +601,7 @@ html[lang='en'] .course-card-top {
   transform: none;
 }
 [data-theme='dark'] .course-card.is-past {
-  border-color: rgb(255 255 255 / 6%);
+  border: 0;
   box-shadow: none;
 }
 .course-card.compact {
@@ -665,27 +613,50 @@ html[lang='en'] .course-card-top {
 .content-layout.with-coming-up {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 250px;
-  grid-template-areas: 'schedule upcoming' 'schedule mascot';
-  grid-template-rows: auto 1fr;
-  align-items: start;
+  grid-template-areas: 'schedule rail';
+  grid-template-rows: auto;
+  align-items: stretch;
   gap: 28px;
 }
 .with-coming-up > .schedule-panel {
   grid-area: schedule;
 }
-.with-coming-up > .upcoming-panel {
+.schedule-rail {
+  grid-area: rail;
+  /* Only the timetable determines the desktop row height. */
+  contain: size;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+.schedule-rail > .upcoming-panel {
   grid-area: upcoming;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
   min-width: 0;
   padding: 20px 18px 0;
   border-radius: 16px;
 }
+.schedule-rail > .upcoming-panel > :not(.upcoming-entries) {
+  flex-shrink: 0;
+}
+.schedule-rail .upcoming-entries {
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+.schedule-rail .rail-link {
+  margin-top: auto;
+}
 .upcoming-panel .rail-heading h3 {
   font-size: 17px;
 }
-.upcoming-panel .rail-description {
-  font-size: 11px;
-  line-height: 1.6;
-  margin: 8px 0 24px;
+.upcoming-panel .rail-heading {
+  margin-bottom: 24px;
 }
 .upcoming-entries {
   scrollbar-width: none;
@@ -754,18 +725,21 @@ html[lang='en'] .course-card-top {
   padding: 15px 18px;
 }
 /* Keep the original rabbit card typography and illustration proportions. */
-.with-coming-up > .mascot-card {
+.schedule-rail > .mascot-card {
   display: block;
   grid-area: mascot;
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow: auto;
   margin: 0;
   padding: 18px 22px 26px;
   border-radius: 18px;
 }
-.with-coming-up > .mascot-card .mascot-art {
+.schedule-rail > .mascot-card .mascot-art {
   height: 135px;
   margin-top: -4px;
 }
-.with-coming-up > .mascot-card .mascot-title {
+.schedule-rail > .mascot-card .mascot-title {
   font-size: 19px;
   font-weight: 500;
   line-height: 1.8;
@@ -774,7 +748,7 @@ html[lang='en'] .course-card-top {
   white-space: pre-line;
   text-align: left;
 }
-.with-coming-up > .mascot-card .mascot-description {
+.schedule-rail > .mascot-card .mascot-description {
   font-size: 9px;
   line-height: 2.1;
   letter-spacing: 0.7px;
@@ -783,10 +757,12 @@ html[lang='en'] .course-card-top {
   text-align: left;
 }
 .sidebar .sidebar-journey.week-progress {
+  background: transparent;
   min-height: 0;
   height: auto;
   margin: 38px 0 0;
   padding: 14px 12px;
+  border: 0;
   border-radius: 12px;
 }
 .sidebar-journey.week-progress > div:first-child {
@@ -812,25 +788,42 @@ html[lang='en'] .course-card-top {
     grid-template-areas: 'upcoming' 'schedule' 'mascot';
     gap: 28px;
   }
-  .with-coming-up > .upcoming-panel {
+  .schedule-rail {
+    display: contents;
+    contain: none;
+  }
+  .schedule-rail > .upcoming-panel {
+    display: block;
+    overflow: hidden;
     padding: 14px 14px 0;
+  }
+  .schedule-toolbar {
+    padding: 14px;
+  }
+  .schedule-rail .upcoming-entries {
+    overflow-x: auto;
+    overflow-y: hidden;
   }
   .upcoming-panel .rail-heading h3 {
     font-size: 16px;
   }
-  .upcoming-panel .rail-description {
-    margin: 4px 0 14px;
+  .upcoming-panel .rail-heading {
+    margin-bottom: 14px;
   }
   .upcoming-entries {
     display: flex;
     overflow-x: auto;
-    overscroll-behavior-x: contain;
-    scroll-snap-type: x proximity;
+    overscroll-behavior-x: none;
+    scroll-snap-type: x mandatory;
   }
   .upcoming-panel .upcoming-course {
     flex: 0 0 clamp(220px, 32%, 280px);
     display: block;
     scroll-snap-align: start;
+  }
+  .upcoming-panel .upcoming-course:last-child {
+    /* Keep the final card at its normal width and stop at its trailing edge. */
+    scroll-snap-align: end;
   }
   .upcoming-panel .upcoming-timeline {
     display: block;
@@ -859,7 +852,7 @@ html[lang='en'] .course-card-top {
     width: calc(100% + 28px);
   }
   .with-coming-up > .schedule-panel,
-  .with-coming-up > .mascot-card {
+  .schedule-rail > .mascot-card {
     width: 100%;
     justify-self: stretch;
   }
@@ -877,11 +870,18 @@ html[lang='en'] .course-card-top {
 
 /* Phones share a compact width; tablets use the whole content column. */
 @media (max-width: 640px) {
-  .with-coming-up > .upcoming-panel,
+  .upcoming-panel .upcoming-course {
+    flex-basis: 50%;
+  }
+  .schedule-rail > .upcoming-panel,
   .with-coming-up > .schedule-panel,
-  .with-coming-up > .mascot-card {
+  .schedule-rail > .mascot-card {
     width: 100%;
     max-width: 360px;
     justify-self: center;
   }
+}
+
+main {
+  padding-bottom: max(32px, env(safe-area-inset-bottom));
 }
