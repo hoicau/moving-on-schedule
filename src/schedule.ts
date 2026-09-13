@@ -48,6 +48,15 @@ export const DEFAULT_SETTINGS: Settings = {
   totalWeeks: 20,
   periods: Array.from({ length: 12 }, () => ({ start: '', end: '' })),
 };
+
+export function getPeriodBreaks(periods: Settings['periods']): boolean[] {
+  return periods.map((period, index) => {
+    const previousEnd = periods[index - 1]?.end;
+    // Validated HH:mm strings sort chronologically; unknown times imply no gap.
+    return Boolean(previousEnd && period.start && period.start > previousEnd);
+  });
+}
+
 const allWeeks = Array.from({ length: 16 }, (_, i) => i + 1);
 export const SAMPLE_COURSES: PeriodCourse[] = [
   ['Calculus A', 'Chen Ming', 'Science A-302', 1, 1, 2, 'sage'],

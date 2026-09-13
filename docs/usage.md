@@ -25,7 +25,7 @@ If weekends are hidden while the viewed week has weekend classes, a visible noti
 
 ## Appearance
 
-Use the sun, moon, and monitor buttons in the top bar for **Light mode**, **Dark mode**, or **Follow system**. The default follows your device and updates when its appearance changes. An explicit light or dark choice overrides the device setting and is remembered in this browser independently of course data.
+Use the sun, moon, and monitor buttons in the top bar for **Light mode**, **Dark mode**, or **Follow system**. The default follows your device and updates when its appearance changes. An explicit light or dark choice overrides the device setting and is remembered in this browser without changing course contents.
 
 ## Import Excel or CSV
 
@@ -64,11 +64,13 @@ Design,Wed,14:00,15:30,"1,3,5",Studio,Ada,
 
 ## Export and storage
 
-Use **Display → Export Excel timetable** above the timetable to export all course meetings as Excel. Exported courses can be imported again. Semester settings, class times, and custom colors are not included in this export.
+Use **Display → Export all data (JSON)** to back up all courses, IDs, remarks, colors, semester settings, daily times, language, appearance and display preferences. Export includes the current edits even if a local save failed. Use **Import timetable** to validate and preview a backup, then confirm a complete replacement. Invalid, damaged or unsupported files leave current data untouched. See [backup format and recovery details](backup-format.md).
 
-Courses and settings are automatically stored in this browser's `localStorage`. A normal site update preserves them while the origin and storage format remain compatible. Clearing site data removes them; private sessions may discard them on exit.
+**Display → Export Excel timetable** exports course meetings for spreadsheet editing and later appending/replacing through the spreadsheet importer. Excel does not include semester settings, daily times or custom colors.
 
-Different browsers, devices, ports, and domains have separate storage. To move courses between them, export from the old location and import at the new one; re-enter semester settings as needed. If saving fails, the app displays a warning—export before closing the page.
+Changes are saved as one complete local snapshot. Successful saves are verified by reading the snapshot back; normal saving has no status row on the home page. A failure keeps edits in memory and offers JSON export and retry. Damaged storage is preserved with a raw recovery download. Changes in another tab pause writes; export your work before confirming **Load saved version**. Restoring a JSON backup also checks that saved data did not change during preview.
+
+Different browsers, devices, ports and domains have separate storage. To move everything, export JSON at the old location and restore it at the new one. Private browsing can clear data when the last private window closes; normal browser storage can also be cleared or evicted. The app does not guess whether a session is private. Keep independent backups even after a successful save.
 
 ## Current scope
 

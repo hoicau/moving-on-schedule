@@ -7,6 +7,7 @@ import {
   dateAtWeek,
   decodeSaved,
   DEFAULT_SETTINGS,
+  getPeriodBreaks,
   localDate,
   parseCourseTiming,
   SAMPLE_COURSES,
@@ -15,6 +16,34 @@ import {
 } from './schedule';
 import { createWorkbook, readImport } from './importer';
 import { recentCourses } from './occurrences';
+
+test('period breaks require a known gap between adjacent bell times', () => {
+  assert.deepEqual(
+    getPeriodBreaks(DEFAULT_SETTINGS.periods),
+    Array(12).fill(false),
+  );
+  assert.deepEqual(
+    getPeriodBreaks([
+      { start: '08:00', end: '08:45' },
+      { start: '08:45', end: '09:30' },
+      { start: '09:31', end: '10:15' },
+      { start: '13:00', end: '' },
+      { start: '14:00', end: '14:45' },
+      { start: '', end: '15:30' },
+      { start: '15:30', end: '16:15' },
+    ]),
+    [false, false, true, true, false, false, false],
+  );
+});
+
+test('period breaks follow edited times at any configured period', () => {
+  const periods = Array.from({ length: 30 }, () => ({ start: '', end: '' }));
+  periods[28] = { start: '21:00', end: '21:45' };
+  periods[29] = { start: '22:00', end: '22:45' };
+  assert.deepEqual(getPeriodBreaks(periods), [...Array(29).fill(false), true]);
+  periods[29].start = '21:45';
+  assert.deepEqual(getPeriodBreaks(periods), Array(30).fill(false));
+});
 
 test('week journey starts at midnight and clamps past and future weeks', () => {
   const settings = { ...DEFAULT_SETTINGS, startDate: '2026-09-07' };

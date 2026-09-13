@@ -1,0 +1,261 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Moving-on Schedule backup v1",
+  "description": "Complete portable timetable and preferences. Cross-field constraints also require application validation; see docs/backup-format.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "version",
+    "exportedAt",
+    "schedule",
+    "preferences",
+    "integrity"
+  ],
+  "properties": {
+    "format": {
+      "const": "moving-on-schedule"
+    },
+    "version": {
+      "const": 1
+    },
+    "exportedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "schedule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["courses", "settings", "isDemo"],
+      "properties": {
+        "courses": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/course"
+          }
+        },
+        "settings": {
+          "$ref": "#/$defs/settings"
+        },
+        "isDemo": {
+          "type": "boolean"
+        }
+      }
+    },
+    "preferences": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["locale", "theme", "display"],
+      "properties": {
+        "locale": {
+          "enum": ["en", "zh-Hans", "zh-Hant"]
+        },
+        "theme": {
+          "enum": ["light", "dark", "system"]
+        },
+        "display": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["showRemarks", "showWeekend"],
+          "properties": {
+            "showRemarks": {
+              "type": "boolean"
+            },
+            "showWeekend": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    },
+    "integrity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "value"],
+      "properties": {
+        "algorithm": {
+          "const": "SHA-256"
+        },
+        "value": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "course": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "teacher",
+        "room",
+        "day",
+        "weeks",
+        "color",
+        "note",
+        "timing",
+        "start",
+        "end"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+          "pattern": "\\S"
+        },
+        "teacher": {
+          "type": "string"
+        },
+        "room": {
+          "type": "string"
+        },
+        "day": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 7
+        },
+        "weeks": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 30
+          }
+        },
+        "color": {
+          "enum": ["sage", "peach", "lavender", "blue", "yellow", "rose"]
+        },
+        "note": {
+          "type": "string"
+        },
+        "timing": {
+          "enum": ["period", "time"]
+        },
+        "start": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 30
+            },
+            {
+              "type": "string",
+              "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+            }
+          ]
+        },
+        "end": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 30
+            },
+            {
+              "type": "string",
+              "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+            }
+          ]
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "timing": {
+              "const": "period"
+            },
+            "start": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 30
+            },
+            "end": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 30
+            }
+          }
+        },
+        {
+          "properties": {
+            "timing": {
+              "const": "time"
+            },
+            "start": {
+              "type": "string",
+              "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+            },
+            "end": {
+              "type": "string",
+              "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+            }
+          }
+        }
+      ]
+    },
+    "settings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["semester", "startDate", "totalWeeks", "periods"],
+      "properties": {
+        "semester": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "startDate": {
+          "type": "string",
+          "format": "date",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "totalWeeks": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 30
+        },
+        "periods": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 30,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["start", "end"],
+            "properties": {
+              "start": {
+                "anyOf": [
+                  {
+                    "const": ""
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                  }
+                ]
+              },
+              "end": {
+                "anyOf": [
+                  {
+                    "const": ""
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

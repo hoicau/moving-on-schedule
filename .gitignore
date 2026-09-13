@@ -6,3 +6,4 @@ test-results/
 /.wrangler/
 /.dev.vars
 /.dev.vars.*
+playwright-report/

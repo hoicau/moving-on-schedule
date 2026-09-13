@@ -1,0 +1,63 @@
+{
+  "format": "moving-on-schedule",
+  "version": 1,
+  "exportedAt": "2026-09-13T00:00:00.000Z",
+  "schedule": {
+    "courses": [
+      {
+        "id": "example-period",
+        "name": "Calculus",
+        "teacher": "Example teacher",
+        "room": "A-101",
+        "day": 1,
+        "weeks": [1, 3, 5],
+        "color": "sage",
+        "note": "Bring textbook",
+        "timing": "period",
+        "start": 1,
+        "end": 2
+      },
+      {
+        "id": "example-time",
+        "name": "Workshop",
+        "teacher": "",
+        "room": "Studio",
+        "day": 3,
+        "weeks": [2, 4, 6],
+        "color": "blue",
+        "note": "",
+        "timing": "time",
+        "start": "14:00",
+        "end": "15:30"
+      }
+    ],
+    "settings": {
+      "semester": "Example semester",
+      "startDate": "2026-09-07",
+      "totalWeeks": 16,
+      "periods": [
+        {
+          "start": "08:00",
+          "end": "08:45"
+        },
+        {
+          "start": "08:55",
+          "end": "09:40"
+        }
+      ]
+    },
+    "isDemo": false
+  },
+  "preferences": {
+    "locale": "en",
+    "theme": "system",
+    "display": {
+      "showRemarks": false,
+      "showWeekend": true
+    }
+  },
+  "integrity": {
+    "algorithm": "SHA-256",
+    "value": "c2628dcda572511979d8a9d66cf3f4b1003a64fccc9672d5ab8c8341a2e6bf90"
+  }
+}

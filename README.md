@@ -16,6 +16,8 @@ The button deploys to Cloudflare Workers Static Assets. [Deployment guide](docs/
 - Add, edit, and delete classes with custom colors, rooms, teachers, and remarks; optional home-page remark display.
 - Schedule by period number or 24-hour clock time; support consecutive, selected, odd, or even teaching weeks and conflict checks.
 - Import `.xlsx` / UTF-8 `.csv` with validation and preview; download templates and export courses.
+- Export and restore complete JSON backups, including settings and preferences, with SHA-256 integrity checks.
+- Verified local saves, legacy migration, recovery downloads and protection against overwrites from other tabs.
 - Customize semester dates and optional class times (blank by default), with automatic browser storage.
 
 ## Quick start
@@ -32,10 +34,11 @@ Open <http://localhost:5173>. Start with the sample timetable, choose **Start fr
 ## Documentation
 
 - [Usage](docs/usage.md)
+- [JSON backups and storage safety](docs/backup-format.md)
 - [Deployment](docs/deployment.md)
 - [Development and verification](docs/development.md)
 
-Course data stays in the current browser. There are no accounts or cloud sync; export your courses before clearing site data or switching domains. Spreadsheet imports require the documented row format.
+Course data stays in the current browser. There are no accounts or cloud sync; export a JSON backup before clearing site data or switching domains. Private browsing may discard local data on exit. Spreadsheet imports require the documented row format.
 
 ## License
 

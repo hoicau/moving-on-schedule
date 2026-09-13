@@ -23,7 +23,7 @@
 
 ## i18n
 
-`src/messages.ts` 以 English 为源文案，通过稳定语义 key 保存简体与繁体翻译；缺失翻译时回退 English。通过 `useI18n().t` 使用完整句子和 `{0}` 形式的参数，不对用户输入检查字典。`src/demoText.ts` 仅处理内置示例文案，并兼容旧版示例文本。`src/i18n.ts` 负责语言匹配、插值和 `Intl` 日期格式；`src/LocaleProvider.tsx` 管理独立的 `moving-on-schedule.locale` 偏好，不修改课表或主题数据。`src/locale.css` 适配较长文案。标准 locale 为 `en`、`zh-Hans`、`zh-Hant`，provider 自动迁移旧的 `zh-CN` / `zh-TW` 语言偏好。
+`src/messages.ts` 以 English 为源文案，通过稳定语义 key 保存简体与繁体翻译；缺失翻译时回退 English。通过 `useI18n().t` 使用完整句子和 `{0}` 形式的参数，不对用户输入检查字典。`src/demoText.ts` 仅处理内置示例文案，并兼容旧版示例文本。`src/i18n.ts` 负责语言匹配、插值和 `Intl` 日期格式；`src/LocaleProvider.tsx` 通过统一用户数据 store 读取和修改语言偏好。`src/locale.css` 适配较长文案。标准 locale 为 `en`、`zh-Hans`、`zh-Hant`，存储加载器迁移旧的 `zh-CN` / `zh-TW` 语言偏好。
 
 导入和校验函数接受可选 locale，默认使用 `en`。可接受的文件格式不随界面语言改变。`src/i18n.test.ts` 校验占位符、语言变体、混合语言输入及真实 Excel 往返。新增语言时同步更新语言列表、字典、测试和响应式检查。
 
@@ -33,15 +33,23 @@
 
 界面变更还需检查桌面与手机布局、课程增删改、周次过滤、文件导入导出和刷新保存。Excel 模块按需加载，生产构建中较大的 chunk 可能触发 Vite 体积提示。
 
+所有可滚动界面统一使用 `src/styles.css` 的隐藏滚动条和 overscroll 样式，新增滚动区域也要加入 overscroll 规则。在可滚动方向上，到达边界后停止，不回弹，也不带动外层滚动区域；横向列表仍允许上下滚动页面。仅为裁切装饰而设置 overflow 的元素不加入此规则，确保在课程卡片上使用滚轮仍能滚动页面。保留滚轮、触摸和键盘滚动，并确保矮屏下所有控件仍可到达。
+
+课表在所有屏幕尺寸下都完整展开全部节次。小屏幕只在课表内部横向滚动，纵向手势滚动整个页面；不要根据视口限制课表高度。
+
+仅当前一节结束时间与下一节开始时间均已填写、且两者存在间隔时，显示粗分割线。时间相接或缺失时不显示。时间列、每日网格和课程顶部留白共用这一规则，不按固定节次分隔。
+
 ## 首页行为
 
 `src/occurrences.ts` 独立于浏览周次计算当前与下一次课程，保留同时发生的课程。作息支持留空和部分填写：仍可识别过去的日期，今日时间不完整的课程会明确提示。新设置默认包含 12 组空白时间，可配置为 1–30 节；表单、存储和导入均按实际节数校验。`dateAtWeek` 以周一为每周基准，`courseOccursInWeek` 排除实际开学日之前的课程，支持不足七天的首周。课程时间采用 discriminated union：旧版数字 `start`/`end`（`timing: "period"` 可省略），或带 `timing: "time"` 的标准 `HH:mm` 字符串。`parseCourseTiming` 校验表单及导入的合并输入；缺少作息时，`courseOverlap` 对混合类型的冲突判断返回未知。按时间安排的课程在周课表中使用独立区域。`src/useNow.ts` 在分钟边界、获得焦点和页面可见性变化时刷新。
 
-`src/ComingUp.tsx` 展示时间线（三条安排及所有近期候选），`src/WeekJourney.tsx` 展示侧栏所选周的时间进度，`src/MascotCard.tsx` 保留原兔子插画。`src/home.css` 管理紧凑首页、课表参照、课程详情与显示菜单。`src/displayPreferences.ts` 定义独立的 `moving-on-schedule.display` 偏好（`showRemarks: false`、`showWeekend: true`）。为兼容旧数据，课程存储字段仍为 `note`；英文界面使用 Remark，导出表头使用 `remark`，导入继续兼容旧别名。
+`src/ComingUp.tsx` 展示时间线（三条安排及所有近期候选），`src/WeekJourney.tsx` 展示侧栏所选周的时间进度，`src/MascotCard.tsx` 保留原兔子插画。`src/home.css` 管理紧凑首页、课表参照、课程详情与显示菜单。`src/displayPreferences.ts` 定义显示偏好（`showRemarks: false`、`showWeekend: true`），现统一存入完整快照；旧键继续用于迁移。为兼容旧数据，课程存储字段仍为 `note`；英文界面使用 Remark，导出表头使用 `remark`，导入继续兼容旧别名。
 
 ## 存储变更
 
-当前存储键为 `moving-on-schedule.v1`，schema 版本为 `1`。调整结构时需校验或迁移旧数据。现有加载器遇到损坏数据会提示，直至后续修改才尝试写入。Excel 导出保留课程字段和周次，不包含学期设置或自定义颜色。
+当前存储键为 `moving-on-schedule.data`，包含课表与全部偏好、格式版本及 SHA-256 校验值。`src/storage.ts` 处理旧数据读取、hash 校验、Web Locks、快照比较与回读验证；`src/userDataStore.ts` 处理修改队列、冲突、重试及明确恢复；`src/UserDataProvider.tsx` 提供共享状态并监听存储、焦点和离页事件。`src/backup.ts` 导出当前状态，`src/backupImport.ts` 仅在导入时加载 Ajv。详见[格式、迁移与失败处理](backup-format_zh.md)。
+
+运行 `npm run test:e2e` 验证浏览器数据安全流程。首次使用 `npx playwright install chromium` 安装浏览器，或设置 `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`。`src/BuildFooter.tsx` 显示应用版本和短 commit 链接，构建时间放在悬停提示中。Vite 将同一份元数据写入客户端和 `/build-info.json`；JSON 还包含独立的数据格式版本。末尾的 `*` 表示包含未提交的更改；没有 Git 元数据的源码压缩包仅显示版本。提交后重启开发服务器以刷新构建信息。
 
 保持中英文 README 与 `docs/` 内容一致。依赖、构建产物、凭据和本地 Wrangler 状态不应提交。
 

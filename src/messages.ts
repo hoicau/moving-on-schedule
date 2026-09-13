@@ -91,7 +91,7 @@ export const en = {
   'ui.locationTbd': 'Location TBD',
   'ui.teacherTbd': 'Teacher TBD',
   'ui.couldNotSaveLocallyStorageMayBeFullExport':
-    'Could not save locally. Storage may be full. Export an Excel backup before closing, or these changes will be lost.',
+    'Could not save locally. Storage may be full. Export a JSON backup before closing, or these changes will be lost.',
   'ui.courseDeleted': 'Course deleted.',
   'ui.timetableExportedToExcel': 'Timetable exported to Excel.',
   'ui.exportFailedPleaseTryAgain': 'Export failed. Please try again.',
@@ -100,7 +100,6 @@ export const en = {
   'course.all': 'All courses',
   'ui.importTimetable': 'Import timetable',
   'ui.gettingStarted': 'Getting started',
-  'ui.savedInThisBrowserOnly': 'Saved in this browser only',
   'ui.openNavigation': 'Open navigation',
   'ui.appearance': 'Appearance',
   'ui.appearanceChangedButThisBrowserCouldNotSaveYour':
@@ -123,6 +122,54 @@ export const en = {
   'ui.sampleTimetable': 'Sample timetable',
   'ui.weekends': 'Weekends',
   'ui.exportExcelTimetable': 'Export Excel timetable',
+  'storage.failed':
+    'Changes could not be saved or verified. Keep this page open and export a JSON backup, or retry.',
+  'storage.unavailable':
+    'This browser cannot access local storage. Keep this page open and export your changes before closing.',
+  'storage.corrupt':
+    'Saved data is damaged or unsupported. The original has been preserved. You can download it for recovery; automatic saving is paused.',
+  'storage.conflict':
+    'Another tab changed or cleared the saved data. This tab will not overwrite it. Export your work before loading the saved version.',
+  'storage.unsupported':
+    'Safe saving and JSON backups require HTTPS and a browser with Web Crypto and Web Locks. Keep this page open while recovering your data.',
+  'storage.exportOriginal': 'Download original data',
+  'storage.retry': 'Retry save',
+  'storage.loadLatest': 'Load saved version',
+  'storage.reloadWarning':
+    'This replaces this tab’s current data with the saved version, including all preferences. Export any unsaved work first.',
+  'storage.privateHelp':
+    'Clearing site data or closing private windows may remove your data. Back up regularly.',
+
+  'backup.checking': 'Checking backup…',
+
+  'backup.replaceWarning':
+    'Restoring replaces every course, semester setting, and preference with this backup. Export your current data first if you want to keep it.',
+  'backup.restore': 'Restore all data',
+  'backup.restored': 'Backup restored and saved.',
+  'backup.invalid': 'This file does not match the backup format.',
+  'backup.integrityFailed':
+    'The backup integrity check failed. Its contents may have changed or been damaged.',
+  'backup.unsupported':
+    'This backup version is not supported. Update the app before trying again.',
+  'backup.tooLarge': 'Choose a JSON backup smaller than 50 MiB.',
+  'backup.failed': 'Could not read this backup. Please try again.',
+  'import.filesHelp':
+    'Import courses from a spreadsheet, or restore a complete JSON backup.',
+  'import.dropFile':
+    'Drop your timetable or backup here, or click to choose a file',
+  'import.acceptedFiles':
+    'Supports spreadsheet files (XLSX/CSV, up to 10 MB) or backup files (JSON, up to 50 MB)',
+  'backup.ready': 'Ready to restore',
+  'backup.complete': 'Complete backup',
+  'backup.contents': 'Courses',
+  'backup.meetingCount': '{0} meetings',
+  'backup.createdAt': 'Backed up',
+  'backup.includes':
+    'Includes semester settings, daily times, course colors and remarks, language, appearance, and display preferences.',
+  'backup.exportAll': 'Export all data (JSON)',
+  'backup.exported': 'All data exported to JSON.',
+  'backup.unreadable':
+    'The saved timetable could not be read. A complete backup cannot be exported.',
   'ui.noMatchingCourses': 'No matching courses',
   'ui.addACourseOnPeriod': 'Add a course on {0}, period {1}',
   'ui.addACourseOn': 'Add a course on {0}',
@@ -139,10 +186,10 @@ export const en = {
   'ui.addAndManageCourses': 'Add and manage courses',
   'help.importTitle': 'Import Excel or CSV',
   'ui.downloadTheTemplateAndUseOneMeetingPerRow':
-    'Open Import timetable at the top of the home page and download the template. Use one weekly meeting per row in .xlsx or UTF-8 .csv; start and end accept periods or 24-hour times. Review the preview, then append or replace courses. Remark is optional; older note headers remain supported.',
+    'Open Import timetable and download the template. Fill in one class time slot per row, then upload the file. Check the preview and choose to add to or replace existing courses.',
   'help.storageTitle': 'Storage and export',
   'ui.coursesStayInThisBrowserWithNoSignIn':
-    'Courses and settings are saved automatically in this browser on this site. Use Display → Export Excel timetable to save a copy of your courses. Excel includes times and remarks, but not semester settings, daily times, or custom colors. To move to another browser or device, import that file and configure the timetable settings again. Clearing site data removes the local timetable; there is no cloud sync.',
+    'Data stays in this browser. Use Display to export a complete JSON backup, and Import timetable to restore it. Excel exports courses only.',
   'ui.dismissNotification': 'Dismiss notification',
   'ui.chooseEitherOddOrEvenWeeks': 'Choose either odd or even weeks.',
   'ui.enterTeachingWeeksEG116': 'Enter teaching weeks, e.g. 1-16.',
@@ -237,6 +284,9 @@ export const en = {
     'Display updated, but this browser could not save your choice.',
   'footer.sourceCode': 'Source code',
   'footer.motto': 'Make every day your favorite episode.',
+  'footer.builtAt': 'Built {0}',
+  'footer.uncommittedChanges': '* Includes uncommitted changes',
+  'footer.viewCommit': 'View commit {0}',
 
   'course.details': 'Course details',
   'course.time': 'Time',
@@ -255,8 +305,7 @@ export const en = {
   'calendar.dateWeek': '{0}, week {1}',
   'import.headerHelp':
     'Start with a header row. Required columns: {0}. Room, teacher, and remarks are optional. Use one row per weekly meeting; repeat a course for multiple time slots. The first nonempty worksheet is read, and its name appears in the preview.',
-  'help.display':
-    'Remarks are hidden on home by default. Use Display to show remarks or weekends. Remarks sit at the bottom of timetable cards and below course names in Coming up; full text stays in details. Coming up follows today, independently of the week you view. It appears on the right on desktop and above the timetable on mobile.',
+  'help.display': 'Use Display to show or hide weekends and course remarks.',
   'help.manageCourses':
     'Choose Add course or an empty cell. Enter two period numbers within the configured daily count or two 24-hour times (08:00, 09:40); use the same format at both ends. Clock-time courses appear under By time and work without daily times. Open a course for details, then edit or delete it. Missing daily times can leave mixed-format conflicts uncertain.',
   'timing.start': 'Start time / period',
@@ -375,7 +424,7 @@ export const translations: Record<
     'ui.locationTbd': '地点待定',
     'ui.teacherTbd': '教师待定',
     'ui.couldNotSaveLocallyStorageMayBeFullExport':
-      '本地保存失败，可能是存储空间已满。请导出 Excel 备份，关闭页面会丢失本次修改。',
+      '本地保存失败，可能是存储空间已满。请导出 JSON 备份，关闭页面会丢失本次修改。',
     'ui.courseDeleted': '课程已删除',
     'ui.timetableExportedToExcel': '课程表已导出为 Excel',
     'ui.exportFailedPleaseTryAgain': '导出失败，请重试',
@@ -384,7 +433,6 @@ export const translations: Record<
     'course.all': '全部课程',
     'ui.importTimetable': '导入课表',
     'ui.gettingStarted': '使用指南',
-    'ui.savedInThisBrowserOnly': '仅存储在此浏览器',
     'ui.openNavigation': '打开导航',
     'ui.appearance': '外观模式',
     'ui.appearanceChangedButThisBrowserCouldNotSaveYour':
@@ -407,6 +455,49 @@ export const translations: Record<
     'ui.sampleTimetable': '示例课表',
     'ui.weekends': '显示周末',
     'ui.exportExcelTimetable': '导出 Excel 课表',
+    'storage.failed':
+      '修改未能保存或通过校验。请保留此页面并导出 JSON 备份，或重试保存。',
+    'storage.unavailable':
+      '当前浏览器无法访问本地存储。请保留此页面，并在关闭前导出修改。',
+    'storage.corrupt':
+      '已保存的数据损坏或版本不受支持。原始数据已保留，可下载用于恢复；自动保存已暂停。',
+    'storage.conflict':
+      '其他标签页修改或清除了已保存的数据，此页面已停止覆盖。请先导出当前修改，再载入已保存版本。',
+    'storage.unsupported':
+      '安全保存和 JSON 备份需要 HTTPS 及支持 Web Crypto 和 Web Locks 的浏览器。请保留此页面以处理数据恢复。',
+    'storage.exportOriginal': '下载原始数据',
+    'storage.retry': '重试保存',
+    'storage.loadLatest': '载入已保存版本',
+    'storage.reloadWarning':
+      '这会用已保存版本替换此页面的当前数据和全部偏好。请先导出尚未保存的修改。',
+    'storage.privateHelp':
+      '清除站点数据或关闭无痕窗口可能丢失数据，请定期备份。',
+
+    'backup.checking': '正在校验备份…',
+
+    'backup.replaceWarning':
+      '恢复会用此备份替换全部课程、学期设置和偏好。如需保留当前数据，请先导出。',
+    'backup.restore': '恢复全部数据',
+    'backup.restored': '备份已恢复并保存。',
+    'backup.invalid': '此文件不符合备份格式。',
+    'backup.integrityFailed': '备份完整性校验失败，内容可能已被修改或损坏。',
+    'backup.unsupported': '暂不支持此备份版本，请更新应用后重试。',
+    'backup.tooLarge': '请选择小于 50 MiB 的 JSON 备份。',
+    'backup.failed': '无法读取此备份，请重试。',
+    'import.filesHelp': '导入表格中的课程，或恢复完整的 JSON 备份。',
+    'import.dropFile': '将课表或备份拖放到这里，或点击选择文件',
+    'import.acceptedFiles':
+      '支持表格文件（XLSX/CSV，最大 10 MB）或备份文件（JSON，最大 50 MB）',
+    'backup.ready': '备份已验证',
+    'backup.complete': '完整备份',
+    'backup.contents': '课程安排',
+    'backup.meetingCount': '{0} 条安排',
+    'backup.createdAt': '备份时间',
+    'backup.includes':
+      '包含学期设置、每日作息、课程颜色与备注，以及语言、外观和显示偏好。',
+    'backup.exportAll': '导出全部数据（JSON）',
+    'backup.exported': '全部数据已导出为 JSON。',
+    'backup.unreadable': '无法读取已保存的课表，不能导出完整备份。',
     'ui.noMatchingCourses': '没有找到匹配的课程',
     'ui.addACourseOnPeriod': '{0}第{1}节添加课程',
     'ui.addACourseOn': '{0}添加课程',
@@ -423,10 +514,10 @@ export const translations: Record<
     'ui.addAndManageCourses': '添加与管理课程',
     'help.importTitle': '导入 Excel 或 CSV',
     'ui.downloadTheTemplateAndUseOneMeetingPerRow':
-      '从首页顶部打开「导入课表」并下载模板，以每行一个每周时段填写 .xlsx 或 UTF-8 .csv。起止列支持节次或 24 小时制时间。检查预览后追加或替换课程。备注可留空，仍兼容旧 note 表头。',
+      '打开「导入课表」，下载模板并填写，每行对应一个上课时段。上传后检查预览，选择追加或替换现有课程。',
     'help.storageTitle': '存储与导出',
     'ui.coursesStayInThisBrowserWithNoSignIn':
-      '课程与设置自动保存在当前浏览器、当前站点。通过「显示 → 导出 Excel 课表」保存课程副本，其中包含课程时间与备注，不包含学期设置、每日作息和自定义颜色。更换浏览器或设备时，导入该文件并重新设置课表。清除站点数据会删除本地课表，目前不支持云同步。',
+      '数据仅保存在当前浏览器。通过「显示」导出 JSON 完整备份，在「导入课表」中恢复；Excel 仅导出课程。',
     'ui.dismissNotification': '关闭提示',
     'ui.chooseEitherOddOrEvenWeeks': '请分别填写单周或双周',
     'ui.enterTeachingWeeksEG116': '请填写上课周次，例如 1-16',
@@ -515,6 +606,9 @@ export const translations: Record<
     'display.saveFailed': '显示已更新，但浏览器暂时无法记住这个选择。',
     'footer.sourceCode': '源代码',
     'footer.motto': '把日常过成喜欢的番。',
+    'footer.builtAt': '构建于 {0}',
+    'footer.uncommittedChanges': '* 包含未提交的更改',
+    'footer.viewCommit': '查看 commit {0}',
 
     'course.details': '课程详情',
     'course.time': '时间',
@@ -532,8 +626,7 @@ export const translations: Record<
     'calendar.dateWeek': '{0}，第 {1} 周',
     'import.headerHelp':
       '第一行是表头： {0} 为必需列；教室、教师、备注为选填。每行是一段上课安排，同一课程多个时间请分行填写。读取第一个非空工作表，导入前会展示工作表名称。',
-    'help.display':
-      '首页默认隐藏备注，可在「显示」菜单中开启，也可切换周末。课表卡片的备注贴底，「即将开始」的备注紧接课名；详情始终显示完整内容。时间线按实际日期计算，不受查看周次影响；桌面端位于右侧，移动端横向置于课表上方。',
+    'help.display': '在「显示」中选择是否显示周末和课程备注。',
     'help.manageCourses':
       '点击「添加课程」或空白格。起止两端填写已设置范围内的整数节次或 24 小时制时间（08:00、09:40），格式须一致。时间课程显示在「按时间」区域，无需填写每日作息。点击课程查看详情，再编辑或删除。作息缺失时，两类课程之间的冲突可能无法确定。',
     'timing.start': '开始时间/节次',
@@ -646,7 +739,7 @@ export const translations: Record<
     'ui.locationTbd': '地點待定',
     'ui.teacherTbd': '教師待定',
     'ui.couldNotSaveLocallyStorageMayBeFullExport':
-      '本機儲存失敗，可能是儲存空間已滿。請匯出 Excel 備份，關閉頁面會遺失本次修改。',
+      '本機儲存失敗，可能是儲存空間已滿。請匯出 JSON 備份，關閉頁面會遺失本次修改。',
     'ui.courseDeleted': '課程已刪除',
     'ui.timetableExportedToExcel': '課表已匯出為 Excel',
     'ui.exportFailedPleaseTryAgain': '匯出失敗，請重試',
@@ -655,7 +748,6 @@ export const translations: Record<
     'course.all': '全部課程',
     'ui.importTimetable': '匯入課表',
     'ui.gettingStarted': '使用指南',
-    'ui.savedInThisBrowserOnly': '僅儲存於此瀏覽器',
     'ui.openNavigation': '開啟導覽',
     'ui.appearance': '外觀模式',
     'ui.appearanceChangedButThisBrowserCouldNotSaveYour':
@@ -678,6 +770,49 @@ export const translations: Record<
     'ui.sampleTimetable': '範例課表',
     'ui.weekends': '顯示週末',
     'ui.exportExcelTimetable': '匯出 Excel 課表',
+    'storage.failed':
+      '修改未能儲存或通過校驗。請保留此頁面並匯出 JSON 備份，或重試儲存。',
+    'storage.unavailable':
+      '目前瀏覽器無法存取本機儲存。請保留此頁面，並在關閉前匯出修改。',
+    'storage.corrupt':
+      '已儲存的資料損壞或版本不受支援。原始資料已保留，可下載用於還原；自動儲存已暫停。',
+    'storage.conflict':
+      '其他分頁修改或清除了已儲存的資料，此頁面已停止覆寫。請先匯出目前修改，再載入已儲存版本。',
+    'storage.unsupported':
+      '安全儲存和 JSON 備份需要 HTTPS 及支援 Web Crypto 和 Web Locks 的瀏覽器。請保留此頁面以處理資料還原。',
+    'storage.exportOriginal': '下載原始資料',
+    'storage.retry': '重試儲存',
+    'storage.loadLatest': '載入已儲存版本',
+    'storage.reloadWarning':
+      '這會用已儲存版本取代此頁面的目前資料和全部偏好。請先匯出尚未儲存的修改。',
+    'storage.privateHelp':
+      '清除網站資料或關閉無痕視窗可能遺失資料，請定期備份。',
+
+    'backup.checking': '正在校驗備份…',
+
+    'backup.replaceWarning':
+      '還原會以此備份取代全部課程、學期設定和偏好。如需保留目前資料，請先匯出。',
+    'backup.restore': '還原全部資料',
+    'backup.restored': '備份已還原並儲存。',
+    'backup.invalid': '此檔案不符合備份格式。',
+    'backup.integrityFailed': '備份完整性校驗失敗，內容可能已被修改或損壞。',
+    'backup.unsupported': '暫不支援此備份版本，請更新應用程式後重試。',
+    'backup.tooLarge': '請選擇小於 50 MiB 的 JSON 備份。',
+    'backup.failed': '無法讀取此備份，請重試。',
+    'import.filesHelp': '匯入表格中的課程，或還原完整的 JSON 備份。',
+    'import.dropFile': '將課表或備份拖放到這裡，或點擊選擇檔案',
+    'import.acceptedFiles':
+      '支援表格檔案（XLSX/CSV，最大 10 MB）或備份檔案（JSON，最大 50 MB）',
+    'backup.ready': '備份已驗證',
+    'backup.complete': '完整備份',
+    'backup.contents': '課程安排',
+    'backup.meetingCount': '{0} 條安排',
+    'backup.createdAt': '備份時間',
+    'backup.includes':
+      '包含學期設定、每日作息、課程顏色與備註，以及語言、外觀和顯示偏好。',
+    'backup.exportAll': '匯出全部資料（JSON）',
+    'backup.exported': '全部資料已匯出為 JSON。',
+    'backup.unreadable': '無法讀取已儲存的課表，無法匯出完整備份。',
     'ui.noMatchingCourses': '找不到符合的課程',
     'ui.addACourseOnPeriod': '{0}第 {1} 節新增課程',
     'ui.addACourseOn': '{0}新增課程',
@@ -694,10 +829,10 @@ export const translations: Record<
     'ui.addAndManageCourses': '新增與管理課程',
     'help.importTitle': '匯入 Excel 或 CSV',
     'ui.downloadTheTemplateAndUseOneMeetingPerRow':
-      '從首頁頂部開啟「匯入課表」並下載範本，以每列一個每週時段填寫 .xlsx 或 UTF-8 .csv。起止欄支援節次或 24 小時制時間。檢查預覽後加入或取代課程。備註可留空，仍相容舊 note 表頭。',
+      '開啟「匯入課表」，下載範本並填寫，每列對應一個上課時段。上傳後檢查預覽，選擇加入或取代現有課程。',
     'help.storageTitle': '儲存與匯出',
     'ui.coursesStayInThisBrowserWithNoSignIn':
-      '課程與設定自動儲存在目前瀏覽器、目前網站。透過「顯示 → 匯出 Excel 課表」儲存課程副本，其中包含課程時間與備註，不包含學期設定、每日作息和自訂顏色。更換瀏覽器或裝置時，匯入該檔案並重新設定課表。清除網站資料會刪除本機課表，目前不支援雲端同步。',
+      '資料僅儲存在目前瀏覽器。透過「顯示」匯出 JSON 完整備份，在「匯入課表」中還原；Excel 僅匯出課程。',
     'ui.dismissNotification': '關閉提示',
     'ui.chooseEitherOddOrEvenWeeks': '請分別填寫單週或雙週',
     'ui.enterTeachingWeeksEG116': '請填寫上課週次，例如 1-16',
@@ -786,6 +921,9 @@ export const translations: Record<
     'display.saveFailed': '顯示已更新，但瀏覽器暫時無法記住這個選擇。',
     'footer.sourceCode': '原始碼',
     'footer.motto': '把日常過成喜歡的番。',
+    'footer.builtAt': '建置於 {0}',
+    'footer.uncommittedChanges': '* 包含未提交的變更',
+    'footer.viewCommit': '查看 commit {0}',
 
     'course.details': '課程詳情',
     'course.time': '時間',
@@ -803,8 +941,7 @@ export const translations: Record<
     'calendar.dateWeek': '{0}，第 {1} 週',
     'import.headerHelp':
       '第一列為欄位名稱：{0} 為必填；教室、教師、備註為選填。每列是一段上課安排，同一課程有多個時段時請分列填寫。讀取第一個非空工作表，匯入前會顯示工作表名稱。',
-    'help.display':
-      '首頁預設隱藏備註，可在「顯示」選單中開啟，也可切換週末。課表卡片的備註貼底，「即將開始」的備註緊接課名；詳情始終顯示完整內容。時間線按實際日期計算，不受查看週次影響；桌面版位於右側，行動版橫向置於課表上方。',
+    'help.display': '在「顯示」中選擇是否顯示週末和課程備註。',
     'help.manageCourses':
       '點選「新增課程」或空白格。起止兩端填寫已設定範圍內的整數節次或 24 小時制時間（08:00、09:40），格式須一致。時間課程顯示在「按時間」區域，無須填寫每日作息。點選課程查看詳情，再編輯或刪除。作息缺失時，兩類課程之間的衝突可能無法確定。',
     'timing.start': '開始時間/節次',

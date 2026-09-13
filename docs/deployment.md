@@ -8,7 +8,7 @@ Moving-on Schedule builds into a static site. All supported platforms serve the 
 | ---------------- | -------------------------------------------------- |
 | Root directory   | Repository root                                    |
 | Framework        | React / Vite                                       |
-| Node.js          | Node 24 LTS (24.21.0)                          |
+| Node.js          | Node 24 LTS (24.21.0)                              |
 | Install command  | `npm ci`, or the platform's lockfile-aware default |
 | Build command    | `npm run build`                                    |
 | Output directory | `dist`                                             |
@@ -66,7 +66,7 @@ References: [Vite on Vercel](https://vercel.com/docs/frameworks/frontend/vite), 
 
 - Verify the sample schedule, manual editing, file import/export, and persistence after reload.
 - Data remains in each visitor's browser. A deployment does not add accounts, backups, or device synchronization.
-- Localhost, preview addresses, and custom domains use separate storage. Export courses before changing origins; re-enter semester settings at the new origin.
+- Localhost, preview addresses, and custom domains use separate storage. Export a JSON backup before changing origins, then restore it at the new origin.
 - Google Fonts has a system-font fallback. The lazy-loaded Excel module can produce a large-chunk build warning; this does not block deployment.
 
 Last updated: 2026-09-12.

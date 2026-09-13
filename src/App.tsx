@@ -1,4 +1,5 @@
 import { localizeDemoText, isDefaultSemester } from './demoText';
+import { flushSync } from 'react-dom';
 import { GitHubIcon } from './GitHubIcon';
 import {
   courseOccurrence,
@@ -9,19 +10,10 @@ import { useNow } from './useNow';
 import { MascotCard } from './MascotCard';
 import { ComingUp } from './ComingUp';
 import { WeekJourney } from './WeekJourney';
-import {
-  DISPLAY_KEY,
-  parseDisplayPreferences,
-  type DisplayPreferences,
-} from './displayPreferences';
+import type { DisplayPreferences } from './displayPreferences';
+import { useUserData } from './UserDataProvider';
 import { useI18n } from './LocaleProvider';
-import {
-  createTranslator,
-  LOCALES,
-  LOCALE_NAMES,
-  type Locale,
-  type Translator,
-} from './i18n';
+import { LOCALES, LOCALE_NAMES, type Locale, type Translator } from './i18n';
 import {
   useEffect,
   useMemo,
@@ -44,6 +36,7 @@ import {
   Clock3,
   Coffee,
   FileSpreadsheet,
+  FileJson,
   GraduationCap,
   HelpCircle,
   LoaderCircle,
@@ -64,10 +57,8 @@ import {
 } from 'lucide-react';
 import {
   COLORS,
-  DEFAULT_SETTINGS,
   MAX_PERIODS,
   courseOccursInWeek,
-  SAMPLE_COURSES,
   conflicts,
   unresolvedConflicts,
   parseCourseTiming,
@@ -77,8 +68,8 @@ import {
   type PeriodCourse,
   currentWeek,
   dateAtWeek,
-  decodeSaved,
   formatWeeks,
+  getPeriodBreaks,
   localDate,
   parseWeeks,
   validateCourse,
@@ -89,8 +80,15 @@ import {
 } from './schedule';
 import type { ImportResult } from './importer';
 import { useTheme } from './useTheme';
+import {
+  downloadBackup,
+  downloadJson,
+  backupUserData,
+  type BackupV1,
+} from './backup';
+import type { Snapshot } from './storage';
+import { BuildFooter } from './BuildFooter';
 
-const STORAGE_KEY = 'moving-on-schedule.v1';
 const COLOR_NAMES = [
   'color.sage',
   'color.peach',
@@ -121,43 +119,20 @@ function courseTimeLabel(
     return `${t('time.endsAt', { 0: end })}${separator}${periods}${separator}${t('time.incomplete')}`;
   return `${periods}${separator}${t('time.notSet')}`;
 }
-function loadData(): { data: SavedData; error: string } {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return { data: decodeSaved(raw), error: '' };
-  } catch {
-    return {
-      data: {
-        version: 1,
-        courses: [],
-        settings: DEFAULT_SETTINGS,
-        isDemo: false,
-      },
-      error: 'ui.couldNotReadTheLocalTimetableTheOriginalData',
-    };
-  }
-  return {
-    data: {
-      version: 1,
-      courses: SAMPLE_COURSES,
-      settings: DEFAULT_SETTINGS,
-      isDemo: true,
-    },
-    error: '',
-  };
-}
 function Modal({
   title,
   subtitle,
   children,
   onClose,
   wide = false,
+  className = '',
 }: {
   title: string;
   subtitle?: string;
   children: ReactNode;
   onClose: () => void;
   wide?: boolean;
+  className?: string;
 }) {
   const { t } = useI18n();
   const ref = useRef<HTMLDivElement>(null);
@@ -205,7 +180,7 @@ function Modal({
     >
       <div
         ref={ref}
-        className={`modal ${wide ? 'modal-wide' : ''}`}
+        className={`modal ${wide ? 'modal-wide' : ''} ${className}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
@@ -321,7 +296,7 @@ function CourseForm({
   return (
     <Modal
       title={isEditing ? t('course.edit') : t('course.add')}
-
+      className="course-modal"
       onClose={onClose}
     >
       <form onSubmit={submit} className="course-form" noValidate>
@@ -461,9 +436,6 @@ function CourseForm({
               {confirmDelete ? t('ui.confirmDeletion') : t('ui.deleteCourse')}
             </button>
           )}
-          <span className="settings-storage">
-            {t('ui.savedInThisBrowserOnly')}
-          </span>
           <button className="button secondary" type="button" onClick={onClose}>
             {t('ui.cancel')}
           </button>
@@ -493,12 +465,18 @@ function ImportModal({
   onClose: () => void;
   notify: (text: string) => void;
 }) {
-  const { t, locale, days: DAYS } = useI18n();
+  const { t, locale, days: DAYS, date: formatDate } = useI18n();
+  const { store } = useUserData();
+  const [backupPreview, setBackupPreview] = useState<{
+    backup: BackupV1;
+    baseline: Snapshot;
+  } | null>(null);
   const [result, setResult] = useState<ImportResult | null>(null),
     [fileName, setFileName] = useState(''),
     [error, setError] = useState(''),
     [busy, setBusy] = useState(false),
     [replace, setReplace] = useState(isDemo),
+    [showFormatGuide, setShowFormatGuide] = useState(false),
     [dragging, setDragging] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   const generation = useRef(0);
@@ -514,22 +492,33 @@ function ImportModal({
     setBusy(true);
     setError('');
     setResult(null);
+    setBackupPreview(null);
     setFileName(file.name);
     try {
-      const importer = await import('./importer');
-      const parsed = await importer.readImport(
-        file,
-        totalWeeks,
-        locale,
-        settings.periods.length,
-      );
-      if (token === generation.current) setResult(parsed);
+      if (file.name.toLowerCase().endsWith('.json')) {
+        const { readBackup } = await import('./backupImport');
+        const baseline = store.captureRestoreBaseline();
+        const backup = await readBackup(file);
+        if (token === generation.current)
+          setBackupPreview({ backup, baseline });
+      } else {
+        const importer = await import('./importer');
+        const parsed = await importer.readImport(
+          file,
+          totalWeeks,
+          locale,
+          settings.periods.length,
+        );
+        if (token === generation.current) setResult(parsed);
+      }
     } catch (error) {
       if (token === generation.current)
         setError(
-          error instanceof Error
-            ? error.message
-            : t('ui.couldNotReadTheFilePleaseCheckItsExcel'),
+          error instanceof Error && 'key' in error
+            ? t(String(error.key))
+            : error instanceof Error
+              ? error.message
+              : t('backup.failed'),
         );
     } finally {
       if (token === generation.current) setBusy(false);
@@ -562,20 +551,41 @@ function ImportModal({
       setError(t('ui.couldNotDownloadTheTemplatePleaseTryAgain'));
     }
   }
+  const ready = result !== null || backupPreview !== null;
+  const isJson = fileName.toLowerCase().endsWith('.json');
+  async function confirmImport() {
+    if (backupPreview) {
+      setBusy(true);
+      setError('');
+      if (
+        await store.restore(
+          backupUserData(backupPreview.backup),
+          backupPreview.baseline,
+        )
+      ) {
+        onClose();
+        notify(t('backup.restored'));
+      } else {
+        setError(t(`storage.${store.getSnapshot().status}`));
+        setBusy(false);
+      }
+    } else if (result) onApply(result.courses, replace);
+  }
   return (
     <Modal
       title={t('ui.importTimetable')}
-
+      subtitle={t('import.filesHelp')}
+      className="import-modal"
       onClose={onClose}
       wide
     >
       <div className="import-steps">
-        <span className={!result ? 'active' : 'done'}>
-          <b>{result ? <Check size={12} /> : 1}</b>
+        <span className={!ready ? 'active' : 'done'}>
+          <b>{ready ? <Check size={12} /> : 1}</b>
           {t('ui.chooseFile')}
         </span>
         <i />
-        <span className={result ? 'active' : ''}>
+        <span className={ready ? 'active' : ''}>
           <b>2</b>
           {t('ui.previewImport')}
         </span>
@@ -584,7 +594,7 @@ function ImportModal({
         ref={input}
         hidden
         type="file"
-        accept=".xlsx,.csv"
+        accept=".xlsx,.csv,.json"
         aria-label={t('ui.chooseTimetableFile')}
         onChange={(e) => {
           void select(e.target.files?.[0]);
@@ -609,53 +619,119 @@ function ImportModal({
       >
         {busy ? (
           <LoaderCircle className="spin" size={30} />
+        ) : isJson ? (
+          <FileJson size={32} />
         ) : (
-          <FileSpreadsheet size={32} />
+          <Upload size={32} />
         )}
         <strong>
           {busy
-            ? t('ui.readingYourTimetable')
-            : fileName || t('ui.dropYourExcelFileHere')}
+            ? t(isJson ? 'backup.checking' : 'ui.readingYourTimetable')
+            : fileName || t('import.dropFile')}
         </strong>
-        <span>
-          {fileName
-            ? t('ui.clickToChooseAnotherFile')
-            : t('ui.orClickToChooseAFile')}{' '}
-          <ArrowUpRight size={13} />
-        </span>
-        <small>{t('ui.xlsxOrUtf8CsvUpTo10Mb')}</small>
+        {fileName && !busy && (
+          <span>
+            {t('ui.clickToChooseAnotherFile')} <ArrowUpRight size={13} />
+          </span>
+        )}
+        <small>{t('import.acceptedFiles')}</small>
       </button>
-      <div className="template-row">
-        <div>
-          <strong>{t('import.template')}</strong>
-          <p>{t('import.templateHelp')}</p>
+      {!isJson && (
+        <div className="import-resources">
+          <div className="import-resource-actions">
+            <button className="text-button" type="button" onClick={template}>
+              <ArrowDownToLine size={16} />
+              {t('ui.downloadExcelTemplate')}
+            </button>
+            <button
+              className="text-button"
+              type="button"
+              aria-expanded={showFormatGuide}
+              aria-controls="import-format-guide"
+              onClick={() => setShowFormatGuide((shown) => !shown)}
+            >
+              <BookOpen size={16} />
+              {t('ui.viewFormatGuide')}
+              <ChevronDown className="format-chevron" size={14} />
+            </button>
+          </div>
+          <div
+            id="import-format-guide"
+            className="import-format-guide"
+            hidden={!showFormatGuide}
+          >
+            <p>
+              {t('import.headerHelp', {
+                0: (locale === 'en'
+                  ? ['name', 'day', 'start', 'end', 'weeks']
+                  : [
+                      'course.name',
+                      'ui.day',
+                      'ui.firstPeriod',
+                      'ui.lastPeriod',
+                      'ui.weeks',
+                    ].map((tKey) => t(tKey))
+                ).join(locale === 'en' ? ', ' : '、'),
+              })}
+            </p>
+            <p>{t('ui.daysMonSunOr17Periods112')}</p>
+          </div>
         </div>
-        <button className="text-button" onClick={template}>
-          <ArrowDownToLine size={16} />
-          {t('ui.downloadExcelTemplate')}
-        </button>
-      </div>
-      <details className="format-help">
-        <summary>{t('ui.viewFormatGuide')}</summary>
-        <p>
-          {t('import.headerHelp', {
-            0: (locale === 'en'
-              ? ['name', 'day', 'start', 'end', 'weeks']
-              : [
-                  'course.name',
-                  'ui.day',
-                  'ui.firstPeriod',
-                  'ui.lastPeriod',
-                  'ui.weeks',
-                ].map((tKey) => t(tKey))
-            ).join(locale === 'en' ? ', ' : '、'),
-          })}
-        </p>
-        <p>{t('ui.daysMonSunOr17Periods112')}</p>
-      </details>
+      )}
       {error && (
         <div className="notice error" role="alert">
           {error}
+        </div>
+      )}
+      {backupPreview && (
+        <div className="import-preview backup-preview">
+          <div className="preview-heading">
+            <strong>
+              <ShieldCheck size={16} />
+              {t('backup.ready')}
+            </strong>
+            <small>{t('backup.complete')}</small>
+          </div>
+          <dl className="backup-summary">
+            <div>
+              <dt>{t('settings.semester')}</dt>
+              <dd>{backupPreview.backup.schedule.settings.semester}</dd>
+            </div>
+            <div>
+              <dt>{t('backup.contents')}</dt>
+              <dd>
+                {t('backup.meetingCount', {
+                  0: backupPreview.backup.schedule.courses.length,
+                })}
+              </dd>
+            </div>
+            <div>
+              <dt>{t('settings.firstDay')}</dt>
+              <dd>
+                {formatDate(
+                  new Date(
+                    backupPreview.backup.schedule.settings.startDate +
+                      'T12:00:00',
+                  ),
+                  { year: 'numeric', month: 'short', day: 'numeric' },
+                )}
+              </dd>
+            </div>
+            <div>
+              <dt>{t('backup.createdAt')}</dt>
+              <dd>
+                {formatDate(new Date(backupPreview.backup.exportedAt), {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </dd>
+            </div>
+          </dl>
+          <p className="backup-includes">{t('backup.includes')}</p>
+          <p className="notice warning">{t('backup.replaceWarning')}</p>
         </div>
       )}
       {result && (
@@ -758,17 +834,23 @@ function ImportModal({
         <button
           className="button primary"
           disabled={
-            !result ||
-            result.errors.length > 0 ||
+            !ready ||
             busy ||
-            !result.courses.length
+            (!backupPreview &&
+              (!result?.courses.length || !!result.errors.length))
           }
-          onClick={() => result && onApply(result.courses, replace)}
+          onClick={() => void confirmImport()}
         >
-          <Check size={16} />
-          {result
-            ? t('ui.importMeetings', { 0: result.courses.length })
-            : t('ui.importCourses')}
+          {busy ? (
+            <LoaderCircle className="spin" size={16} />
+          ) : (
+            <Check size={16} />
+          )}
+          {isJson
+            ? t('backup.restore')
+            : result
+              ? t('ui.importMeetings', { 0: result.courses.length })
+              : t('ui.importCourses')}
         </button>
       </div>
     </Modal>
@@ -838,7 +920,7 @@ function SettingsModal({
   return (
     <Modal
       title={t('ui.timetableSettings')}
-
+      className="settings-modal"
       onClose={onClose}
     >
       <form onSubmit={submit} className="course-form" noValidate>
@@ -926,9 +1008,6 @@ function SettingsModal({
           </p>
         )}
         <div className="modal-actions">
-          <span className="settings-storage">
-            {t('ui.savedInThisBrowserOnly')}
-          </span>
           <button className="button secondary" type="button" onClick={onClose}>
             {t('ui.cancel')}
           </button>
@@ -1058,11 +1137,19 @@ function CourseCard({
 export default function App() {
   const { t, locale, days: DAYS, date: formatDate, chooseLocale } = useI18n();
   const { preference, chooseTheme } = useTheme();
-  const [initial] = useState(loadData),
-    [data, setData] = useState(initial.data),
-    [storageError, setStorageError] = useState(initial.error),
-    [changed, setChanged] = useState(false);
+  const { data: userData, status, dirty, canExport, store } = useUserData();
+  const data = userData.schedule;
+  const storageError = [
+    'failed',
+    'unavailable',
+    'corrupt',
+    'conflict',
+    'unsupported',
+  ].includes(status)
+    ? `storage.${status}`
+    : '';
   const { courses: storedCourses, settings, isDemo } = data;
+  const periodBreaks = getPeriodBreaks(settings.periods);
   const courses = useMemo(
     () =>
       isDemo
@@ -1079,25 +1166,23 @@ export default function App() {
     ? t('demo.semester')
     : settings.semester;
   const [week, setWeek] = useState(() =>
-    Math.max(
-      1,
-      Math.min(
-        currentWeek(initial.data.settings),
-        initial.data.settings.totalWeeks,
-      ),
-    ),
+    Math.max(1, Math.min(currentWeek(data.settings), data.settings.totalWeeks)),
   );
+  const display = userData.preferences.display;
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchInput = useRef<HTMLInputElement>(null);
+  const searchButton = useRef<HTMLButtonElement>(null);
   const [page, setPage] = useState<'schedule' | 'courses'>('schedule'),
-    [display, setDisplay] = useState<DisplayPreferences>(() => {
-      try {
-        return parseDisplayPreferences(localStorage.getItem(DISPLAY_KEY));
-      } catch {
-        return parseDisplayPreferences(null);
-      }
-    }),
     [query, setQuery] = useState(''),
     [modal, setModal] = useState<
-      'course' | 'detail' | 'import' | 'settings' | 'help' | 'blank' | null
+      | 'course'
+      | 'detail'
+      | 'import'
+      | 'settings'
+      | 'help'
+      | 'blank'
+      | 'reload'
+      | null
     >(null),
     [editing, setEditing] = useState<Course | undefined>(),
     [newDay, setNewDay] = useState<number | undefined>(),
@@ -1106,38 +1191,33 @@ export default function App() {
   const now = useNow();
   const { showWeekend, showRemarks } = display;
   function chooseDisplay(next: DisplayPreferences) {
-    setDisplay(next);
-    try {
-      localStorage.setItem(DISPLAY_KEY, JSON.stringify(next));
-    } catch {
-      notify(t('display.saveFailed'));
-    }
+    void store.update((current) => ({
+      ...current,
+      preferences: { ...current.preferences, display: next },
+    }));
   }
   const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined,
   );
+  useEffect(() => {
+    if (status === 'saving' || storageError) setToast('');
+  }, [status, storageError]);
   useEffect(() => {
     return () => {
       clearTimeout(toastTimer.current);
     };
   }, []);
   useEffect(() => {
-    if (!changed) return;
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      setStorageError('');
-    } catch {
-      setStorageError(t('ui.couldNotSaveLocallyStorageMayBeFullExport'));
-    }
-  }, [data, changed]);
+    setWeek((current) => Math.min(current, settings.totalWeeks));
+  }, [settings.totalWeeks]);
   function notify(text: string) {
     setToast(text);
     clearTimeout(toastTimer.current);
     toastTimer.current = setTimeout(() => setToast(''), 4000);
   }
-  function update(next: SavedData) {
-    setData(next);
-    setChanged(true);
+  async function update(next: SavedData, success: string) {
+    await store.update((current) => ({ ...current, schedule: next }));
+    if (store.getSnapshot().status === 'saved') notify(success);
   }
   function add(day?: number) {
     setEditing(undefined);
@@ -1153,24 +1233,28 @@ export default function App() {
     setModal('course');
   }
   function save(course: Course) {
-    update({
-      ...data,
-      isDemo: false,
-      courses: editing
-        ? courses.map((c) => (c.id === course.id ? course : c))
-        : [...courses, course],
-    });
+    update(
+      {
+        ...data,
+        isDemo: false,
+        courses: editing
+          ? courses.map((c) => (c.id === course.id ? course : c))
+          : [...courses, course],
+      },
+      editing ? t('course.saved') : t('course.added'),
+    );
     setModal(null);
-    notify(editing ? t('course.saved') : t('course.added'));
   }
   function remove(id: string) {
-    update({
-      ...data,
-      isDemo: false,
-      courses: courses.filter((c) => c.id !== id),
-    });
+    update(
+      {
+        ...data,
+        isDemo: false,
+        courses: courses.filter((c) => c.id !== id),
+      },
+      t('ui.courseDeleted'),
+    );
     setModal(null);
-    notify(t('ui.courseDeleted'));
   }
   const matches = (course: Course) =>
     `${course.name} ${course.teacher} ${course.room}`
@@ -1211,6 +1295,19 @@ export default function App() {
     try {
       await (await import('./importer')).downloadWorkbook(courses, locale);
       notify(t('ui.timetableExportedToExcel'));
+    } catch {
+      notify(t('ui.exportFailedPleaseTryAgain'));
+    }
+  }
+  async function exportAllData() {
+    // An unreadable saved timetable must not be presented as an empty backup.
+    if (!canExport) {
+      notify(t('backup.unreadable'));
+      return;
+    }
+    try {
+      await downloadBackup(data, { locale, theme: preference, display });
+      notify(t('backup.exported'));
     } catch {
       notify(t('ui.exportFailedPleaseTryAgain'));
     }
@@ -1326,12 +1423,7 @@ export default function App() {
                 value={locale}
                 onChange={(event) => {
                   const next = event.target.value as Locale;
-                  if (!chooseLocale(next))
-                    notify(
-                      createTranslator(next)(
-                        'ui.languageChangedButThisBrowserCouldNotSaveYour',
-                      ),
-                    );
+                  chooseLocale(next);
                 }}
               >
                 {LOCALES.map((value) => (
@@ -1361,10 +1453,7 @@ export default function App() {
                   title={label}
                   aria-pressed={preference === value}
                   onClick={() => {
-                    if (!chooseTheme(value))
-                      notify(
-                        t('ui.appearanceChangedButThisBrowserCouldNotSaveYour'),
-                      );
+                    chooseTheme(value);
                   }}
                 >
                   <Icon size={16} aria-hidden="true" />
@@ -1415,11 +1504,54 @@ export default function App() {
             </div>
           </section>
           {storageError && (
-            <div className="notice error" role="alert">
-              {t(storageError)}
-              <button className="text-button" onClick={exportCourses}>
-                {t('ui.exportCurrentTimetable')}
-              </button>
+            <div className="notice error storage-notice" role="alert">
+              <p>{t(storageError)}</p>
+              <div className="storage-actions">
+                {canExport && (
+                  <button className="text-button" onClick={exportAllData}>
+                    {t('backup.exportAll')}
+                  </button>
+                )}
+                {Object.values(store.recoverySnapshot()).some(
+                  (raw) => raw !== null,
+                ) && (
+                  <button
+                    className="text-button"
+                    onClick={() => {
+                      try {
+                        downloadJson(
+                          store.recoverySnapshot(),
+                          'Moving-on-Schedule-recovery.json',
+                        );
+                      } catch {
+                        notify(t('ui.exportFailedPleaseTryAgain'));
+                      }
+                    }}
+                  >
+                    {t('storage.exportOriginal')}
+                  </button>
+                )}
+                {dirty && ['failed', 'unavailable'].includes(status) && (
+                  <button
+                    className="text-button"
+                    onClick={() => void store.retry()}
+                  >
+                    {t('storage.retry')}
+                  </button>
+                )}
+                <button
+                  className="text-button"
+                  onClick={() => setModal('reload')}
+                >
+                  {t('storage.loadLatest')}
+                </button>
+                <button
+                  className="text-button"
+                  onClick={() => setModal('import')}
+                >
+                  {t('ui.importTimetable')}
+                </button>
+              </div>
             </div>
           )}
           <div
@@ -1523,31 +1655,77 @@ export default function App() {
                         />
                         {t('display.showRemarks')}
                       </label>
-                      <button onClick={exportCourses}>
-                        <ArrowDownToLine size={16} />
-                        {t('ui.exportExcelTimetable')}
-                      </button>
+                      <div className="display-exports">
+                        <button onClick={exportCourses}>
+                          <FileSpreadsheet size={16} />
+                          {t('ui.exportExcelTimetable')}
+                        </button>
+                        <button onClick={exportAllData}>
+                          <FileJson size={16} />
+                          {t('backup.exportAll')}
+                        </button>
+                      </div>
                     </div>
                   </details>
                 </div>
-                <label className="search-box">
-                  <Search size={16} />
-                  <input
+                <div
+                  className={`search-box ${searchOpen ? 'is-open' : ''}`}
+                  onBlur={(event) => {
+                    if (
+                      !query &&
+                      !event.currentTarget.contains(event.relatedTarget)
+                    )
+                      setSearchOpen(false);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Escape') {
+                      event.preventDefault();
+                      setQuery('');
+                      setSearchOpen(false);
+                      searchButton.current?.focus();
+                    }
+                  }}
+                >
+                  <button
+                    ref={searchButton}
+                    type="button"
+                    className="icon-button search-trigger"
                     aria-label={t('ui.searchCoursesTeachersRooms')}
-                    placeholder={t('ui.searchCoursesTeachersRooms')}
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                  />
-                  {query && (
-                    <button
-                      className="icon-button"
-                      aria-label={t('ui.clearSearch')}
-                      onClick={() => setQuery('')}
-                    >
-                      <X size={13} />
-                    </button>
+                    aria-expanded={searchOpen}
+                    aria-controls="course-search"
+                    onClick={() => {
+                      flushSync(() => setSearchOpen(true));
+                      searchInput.current?.focus();
+                    }}
+                  >
+                    <Search size={16} aria-hidden="true" />
+                  </button>
+                  {searchOpen && (
+                    <div className="search-field">
+                      <input
+                        id="course-search"
+                        ref={searchInput}
+                        aria-label={t('ui.searchCoursesTeachersRooms')}
+                        placeholder={t('ui.searchCoursesTeachersRooms')}
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                      />
+                      {query && (
+                        <button
+                          type="button"
+                          className="icon-button"
+                          aria-label={t('ui.clearSearch')}
+                          onClick={() => {
+                            setQuery('');
+                            searchInput.current?.focus();
+                          }}
+                        >
+                          <X size={13} />
+                        </button>
+                      )}
+                    </div>
                   )}
-                </label>
+                </div>
               </div>
               {!showWeekend &&
                 filtered.some((course) => course.day > 5) &&
@@ -1628,7 +1806,7 @@ export default function App() {
                       <div className="period-column">
                         {settings.periods.map((p, i) => (
                           <div
-                            className={`period-label ${i === 4 || i === 8 ? 'break-top' : ''}`}
+                            className={`period-label ${periodBreaks[i] ? 'break-top' : ''}`}
                             key={i}
                           >
                             <strong>{String(i + 1).padStart(2, '0')}</strong>
@@ -1663,9 +1841,7 @@ export default function App() {
                                       dateAtWeek(settings, week, i + 1),
                                     ) < settings.startDate
                                   }
-                                  className={
-                                    j === 4 || j === 8 ? 'break-top' : ''
-                                  }
+                                  className={periodBreaks[j] ? 'break-top' : ''}
                                   aria-label={t('ui.addACourseOnPeriod', {
                                     0: day,
                                     1: j + 1,
@@ -1698,7 +1874,7 @@ export default function App() {
                             {clusters.flatMap((cluster) =>
                               cluster.map((course, index) => (
                                 <div
-                                  className={`course-position ${course.start === 5 || course.start === 9 ? 'after-break' : ''}`}
+                                  className={`course-position ${periodBreaks[course.start - 1] ? 'after-break' : ''}`}
                                   key={course.id}
                                   style={{
                                     top: `calc(${course.start - 1} * var(--row-height) + var(--course-top-inset))`,
@@ -1823,6 +1999,7 @@ export default function App() {
               )}
             </section>
           </div>
+          <BuildFooter />
         </main>
       </div>
       {modal === 'detail' && editing && (
@@ -1887,9 +2064,11 @@ export default function App() {
           courses={courses}
           onSave={(course) => {
             if (editing && !courses.some((c) => c.id === editing.id)) {
-              update({ ...data, isDemo: false, courses: [...courses, course] });
+              update(
+                { ...data, isDemo: false, courses: [...courses, course] },
+                t('course.added'),
+              );
               setModal(null);
-              notify(t('course.added'));
             } else save(course);
           }}
           onDelete={remove}
@@ -1903,13 +2082,15 @@ export default function App() {
           isDemo={isDemo}
           existing={courses}
           onApply={(imported, replace) => {
-            update({
-              ...data,
-              courses: replace ? imported : [...courses, ...imported],
-              isDemo: false,
-            });
+            update(
+              {
+                ...data,
+                courses: replace ? imported : [...courses, ...imported],
+                isDemo: false,
+              },
+              t('ui.courseMeetingsImported', { 0: imported.length }),
+            );
             setModal(null);
-            notify(t('ui.courseMeetingsImported', { 0: imported.length }));
           }}
           onClose={() => setModal(null)}
           notify={notify}
@@ -1920,13 +2101,34 @@ export default function App() {
           settings={settings}
           courses={courses}
           onSave={(next) => {
-            update({ ...data, settings: next });
+            update(
+              { ...data, settings: next },
+              t('ui.timetableSettingsUpdated'),
+            );
             setWeek(Math.min(week, next.totalWeeks));
             setModal(null);
-            notify(t('ui.timetableSettingsUpdated'));
           }}
           onClose={() => setModal(null)}
         />
+      )}
+      {modal === 'reload' && (
+        <Modal title={t('storage.loadLatest')} onClose={() => setModal(null)}>
+          <p>{t('storage.reloadWarning')}</p>
+          <div className="modal-actions">
+            <button className="button secondary" onClick={() => setModal(null)}>
+              {t('ui.cancel')}
+            </button>
+            <button
+              className="button primary"
+              onClick={async () => {
+                await store.reload();
+                setModal(null);
+              }}
+            >
+              {t('storage.loadLatest')}
+            </button>
+          </div>
+        </Modal>
       )}
       {modal === 'blank' && (
         <Modal
@@ -1946,9 +2148,11 @@ export default function App() {
             <button
               className="button primary"
               onClick={() => {
-                update({ ...data, courses: [], isDemo: false });
+                update(
+                  { ...data, courses: [], isDemo: false },
+                  t('schedule.blankCreated'),
+                );
                 setModal(null);
-                notify(t('schedule.blankCreated'));
               }}
             >
               {t('ui.createBlankTimetable')}
@@ -1960,7 +2164,7 @@ export default function App() {
       {modal === 'help' && (
         <Modal
           title={t('ui.gettingStarted')}
-
+          className="help-modal"
           onClose={() => setModal(null)}
         >
           <div className="help-content">
@@ -1998,7 +2202,10 @@ export default function App() {
               <ShieldCheck />
               <section>
                 <h3>{t('help.storageTitle')}</h3>
-                <p>{t('ui.coursesStayInThisBrowserWithNoSignIn')}</p>
+                <p>
+                  {t('ui.coursesStayInThisBrowserWithNoSignIn')}{' '}
+                  {t('storage.privateHelp')}
+                </p>
               </section>
             </div>
           </div>

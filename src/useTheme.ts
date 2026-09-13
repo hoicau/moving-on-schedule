@@ -1,22 +1,10 @@
-import { useEffect, useState } from 'react';
-
-type ThemePreference = 'light' | 'dark' | 'system';
-const THEME_KEY = 'moving-on-schedule.theme';
-
-function parsePreference(value: string | null): ThemePreference {
-  return value === 'light' || value === 'dark' ? value : 'system';
-}
-
-function readPreference(): ThemePreference {
-  try {
-    return parsePreference(localStorage.getItem(THEME_KEY));
-  } catch {
-    return 'system';
-  }
-}
+import { useEffect } from 'react';
+import { useUserData } from './UserDataProvider';
+import type { ThemePreference } from './userData';
 
 export function useTheme() {
-  const [preference, setPreference] = useState(readPreference);
+  const { data, store } = useUserData();
+  const preference = data.preferences.theme;
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-color-scheme: dark)');
@@ -38,27 +26,11 @@ export function useTheme() {
     return () => media.removeEventListener('change', apply);
   }, [preference]);
 
-  useEffect(() => {
-    const sync = (event: StorageEvent) => {
-      if (
-        event.storageArea === localStorage &&
-        (event.key === THEME_KEY || event.key === null)
-      ) {
-        setPreference(parsePreference(event.newValue));
-      }
-    };
-    window.addEventListener('storage', sync);
-    return () => window.removeEventListener('storage', sync);
-  }, []);
-
-  function chooseTheme(next: ThemePreference): boolean {
-    setPreference(next);
-    try {
-      localStorage.setItem(THEME_KEY, next);
-      return true;
-    } catch {
-      return false;
-    }
+  function chooseTheme(next: ThemePreference): void {
+    void store.update((current) => ({
+      ...current,
+      preferences: { ...current.preferences, theme: next },
+    }));
   }
 
   return { preference, chooseTheme };

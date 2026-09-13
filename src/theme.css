@@ -129,7 +129,6 @@
     .course-form select,
     .course-form textarea,
     .modal-actions,
-    .format-help,
     .preview-table,
     .preview-table td,
     .preview-table th,
@@ -226,9 +225,6 @@
     .privacy-note,
     .import-steps,
     .drop-zone > small,
-    .template-row strong,
-    .template-row p,
-    .format-help,
     .preview-heading small,
     .preview-table th,
     .preview-table td,
@@ -293,11 +289,7 @@
 [data-theme='dark'] .weekend-toggle input:checked + .toggle-track {
   background: #7eb9e8;
 }
-[data-theme='dark'] .timetable-scroll {
-  scrollbar-color: #526c82 var(--surface);
-}
 [data-theme='dark'] .modal {
-  scrollbar-color: #526c82 transparent;
   box-shadow: 0 20px 100px #050d1880;
 }
 [data-theme='dark'] :is(.modal-backdrop, .nav-scrim) {
