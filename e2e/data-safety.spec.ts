@@ -58,13 +58,18 @@ test('complete JSON export, preview, restore, preferences and reload', async ({
   await page.getByRole('button', { name: 'Dark mode', exact: true }).click();
   await expectSaved(page, { preferences: { theme: 'dark' } });
   await menu(page);
-  await page.getByLabel('Show remarks on home').check();
+  await page.getByLabel('Show remarks', { exact: true }).check();
+  await page.getByLabel('Show teacher', { exact: true }).check();
   await expectSaved(page, {
-    preferences: { theme: 'dark', display: { showRemarks: true } },
+    preferences: {
+      theme: 'dark',
+      display: { showRemarks: true, showTeacher: true },
+    },
   });
   const backup = await exported(page);
   expect(backup.preferences.theme).toBe('dark');
   expect(backup.preferences.display.showRemarks).toBe(true);
+  expect(backup.preferences.display.showTeacher).toBe(true);
   expect(backup.integrity.value).toMatch(/^[a-f0-9]{64}$/);
   await page.getByRole('button', { name: 'Light mode', exact: true }).click();
   await expectSaved(page, { preferences: { theme: 'light' } });
@@ -80,6 +85,8 @@ test('complete JSON export, preview, restore, preferences and reload', async ({
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await menu(page);
+  await expect(page.getByLabel('Show teacher', { exact: true })).toBeChecked();
   expect((await exported(page)).schedule).toEqual(backup.schedule);
 });
 

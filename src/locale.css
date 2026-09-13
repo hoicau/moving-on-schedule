@@ -48,9 +48,6 @@ html[lang='en'] .time-column-heading {
 html[lang='en'] .course-card-top {
   font-size: 7px;
 }
-html[lang='en'] .course-room {
-  white-space: normal;
-}
 html[lang='en'] .week-progress {
   min-height: 140px;
   height: auto;

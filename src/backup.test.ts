@@ -17,7 +17,7 @@ test('JSON round-trip preserves every course field, both timing types, settings,
       data.preferences = {
         locale,
         theme,
-        display: { showRemarks: true, showWeekend: false },
+        display: { showRemarks: true, showWeekend: false, showTeacher: true },
       };
       data.schedule.isDemo = false;
       data.schedule.settings.semester = '自定义學期 "Fall"';
@@ -196,4 +196,18 @@ test('the published example validates, and year-boundary occurrences survive a J
     after.map((entry) => localDate(entry.date)),
     ['2027-01-11'],
   );
+});
+
+test('teacher display remains optional in old backups and rejects invalid values', async () => {
+  const data = defaultUserData('en');
+  const backup = await createBackup(data.schedule, data.preferences);
+  assert.equal(backup.preferences.display.showTeacher, undefined);
+  await verifyBackup(backup);
+  for (const value of [null, 'true', 1]) {
+    const changed = structuredClone(backup);
+    Object.assign(changed.preferences.display, { showTeacher: value });
+    const { integrity: _integrity, ...content } = changed;
+    changed.integrity = await checksum(content);
+    await assert.rejects(verifyBackup(changed), /backup.invalid/);
+  }
 });

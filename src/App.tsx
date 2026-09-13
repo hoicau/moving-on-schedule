@@ -118,7 +118,7 @@ function courseTimeLabel(
     return `${t('time.startsAt', { 0: start })}${separator}${periods}${separator}${t('time.incomplete')}`;
   if (end)
     return `${t('time.endsAt', { 0: end })}${separator}${periods}${separator}${t('time.incomplete')}`;
-  return `${periods}${separator}${t('time.notSet')}`;
+  return t('time.periodsNotSet', { 0: periods });
 }
 function Modal({
   title,
@@ -1095,12 +1095,14 @@ function CourseCard({
   course,
   onClick,
   compact = false,
+  showTeacher,
   showRemarks,
   status,
 }: {
   course: Course;
   onClick: () => void;
   compact?: boolean;
+  showTeacher: boolean;
   showRemarks: boolean;
   status?: 'past' | 'current' | 'next';
 }) {
@@ -1123,10 +1125,10 @@ function CourseCard({
         <ArrowUpRight size={12} />
       </span>
       <strong>{course.name}</strong>
-      <span className="course-room">
-        <MapPin size={12} />
-        {course.room || t('ui.locationTbd')}
-      </span>
+      <span className="course-room">{course.room || t('ui.locationTbd')}</span>
+      {showTeacher && course.teacher.trim() && (
+        <span className="course-teacher">{course.teacher}</span>
+      )}
       {(status === 'current' || status === 'next') && (
         <span className="course-state">
           {status === 'current'
@@ -1198,7 +1200,7 @@ export default function App() {
     [toast, setToast] = useState(''),
     [mobileNav, setMobileNav] = useState(false);
   const now = useNow();
-  const { showWeekend, showRemarks } = display;
+  const { showWeekend, showRemarks, showTeacher = false } = display;
   function chooseDisplay(next: DisplayPreferences) {
     void store.update((current) => ({
       ...current,
@@ -1653,6 +1655,21 @@ export default function App() {
                           {t('ui.weekends')}
                         </label>
                       )}
+                      {page === 'schedule' && (
+                        <label>
+                          <input
+                            type="checkbox"
+                            checked={showTeacher}
+                            onChange={(e) =>
+                              chooseDisplay({
+                                ...display,
+                                showTeacher: e.target.checked,
+                              })
+                            }
+                          />
+                          {t('display.showTeacher')}
+                        </label>
+                      )}
                       <label>
                         <input
                           type="checkbox"
@@ -1746,10 +1763,25 @@ export default function App() {
                     <div
                       className="timetable"
                       data-periods={settings.periods.length}
-                      data-remarks={
-                        showRemarks &&
-                        filtered.some((course) => course.note.trim())
-                      }
+                      data-detail-lines={Math.max(
+                        0,
+                        ...filtered
+                          .filter(
+                            (course) =>
+                              isPeriodCourse(course) &&
+                              course.start === course.end &&
+                              course.day <= days.length,
+                          )
+                          .map(
+                            (course) =>
+                              Number(
+                                showTeacher && Boolean(course.teacher.trim()),
+                              ) +
+                              Number(
+                                showRemarks && Boolean(course.note.trim()),
+                              ),
+                          ),
+                      )}
                       style={{
                         gridTemplateColumns: `48px repeat(${days.length}, minmax(100px, 1fr))`,
                       }}
@@ -1795,6 +1827,7 @@ export default function App() {
                                   <CourseCard
                                     key={course.id}
                                     course={course}
+                                    showTeacher={showTeacher}
                                     showRemarks={showRemarks}
                                     status={courseStatus(course)}
                                     onClick={() => showDetails(course)}
@@ -1817,9 +1850,11 @@ export default function App() {
                         ))}
                       </div>
                       {days.map((day, i) => {
-                        const dayCourses = filtered
+                        const scheduledDayCourses = weekCourses
                           .filter(isPeriodCourse)
-                          .filter((c) => c.day === i + 1)
+                          .filter((c) => c.day === i + 1);
+                        const dayCourses = scheduledDayCourses
+                          .filter(matches)
                           .sort((a, b) => a.start - b.start || a.end - b.end);
                         const clusters: PeriodCourse[][] = [];
                         for (const c of dayCourses) {
@@ -1840,7 +1875,12 @@ export default function App() {
                                   disabled={
                                     localDate(
                                       dateAtWeek(settings, week, i + 1),
-                                    ) < settings.startDate
+                                    ) < settings.startDate ||
+                                    scheduledDayCourses.some(
+                                      (course) =>
+                                        course.start <= j + 1 &&
+                                        course.end >= j + 1,
+                                    )
                                   }
                                   className={periodBreaks[j] ? 'break-top' : ''}
                                   aria-label={t('ui.addACourseOnPeriod', {
@@ -1890,6 +1930,7 @@ export default function App() {
                                       course.end === course.start ||
                                       cluster.length > 1
                                     }
+                                    showTeacher={showTeacher}
                                     showRemarks={showRemarks}
                                     status={courseStatus(course)}
                                     onClick={() => showDetails(course)}
@@ -2004,11 +2045,7 @@ export default function App() {
         </main>
       </div>
       {modal === 'detail' && editing && (
-        <Modal
-          title={editing.name}
-          subtitle={t('course.details')}
-          onClose={() => setModal(null)}
-        >
+        <Modal title={editing.name} onClose={() => setModal(null)}>
           <dl className="course-details">
             <div>
               <dt>{t('ui.day')}</dt>

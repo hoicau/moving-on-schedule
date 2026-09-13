@@ -85,7 +85,7 @@ test('clock courses work without daily times and persist alongside old period co
   );
   assert.equal(
     future.next.length,
-    2,
+    0,
     'Do not guess which timing kind is first without bell times',
   );
 });

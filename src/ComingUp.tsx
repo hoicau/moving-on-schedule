@@ -49,7 +49,6 @@ export function ComingUp({
           {entries.map((entry, index) => {
             const { course } = entry;
             const current = includes(recent.current, entry);
-            const untimed = includes(recent.untimed, entry);
             const next = includes(recent.next, entry);
             const clock = courseClock(course, settings);
             const timing =
@@ -98,11 +97,6 @@ export function ComingUp({
                   <span className={`upcoming-tag ${course.color}`}>
                     {days[course.day - 1]} / {timing}
                   </span>
-                  {untimed && (
-                    <span className="upcoming-uncertain">
-                      {t('schedule.todayTimeUnknown')}
-                    </span>
-                  )}
                 </span>
               </button>
             );

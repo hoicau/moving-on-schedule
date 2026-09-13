@@ -68,6 +68,9 @@ export async function createBackup(
       display: {
         showRemarks: preferences.display.showRemarks,
         showWeekend: preferences.display.showWeekend,
+        ...(preferences.display.showTeacher !== undefined
+          ? { showTeacher: preferences.display.showTeacher }
+          : {}),
       },
     },
   };

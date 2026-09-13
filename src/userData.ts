@@ -36,7 +36,9 @@ export function validatePreferences(preferences: Preferences): void {
     !isLocale(preferences.locale) ||
     !['light', 'dark', 'system'].includes(preferences.theme) ||
     typeof preferences.display.showRemarks !== 'boolean' ||
-    typeof preferences.display.showWeekend !== 'boolean'
+    typeof preferences.display.showWeekend !== 'boolean' ||
+    ('showTeacher' in preferences.display &&
+      typeof preferences.display.showTeacher !== 'boolean')
   )
     throw new Error('Invalid preferences.');
 }
@@ -52,7 +54,11 @@ export function validateUserData(data: UserData): void {
   known(data, ['schedule', 'preferences']);
   known(data.schedule, ['version', 'courses', 'settings', 'isDemo']);
   known(data.preferences, ['locale', 'theme', 'display']);
-  known(data.preferences.display, ['showRemarks', 'showWeekend']);
+  known(data.preferences.display, [
+    'showRemarks',
+    'showWeekend',
+    'showTeacher',
+  ]);
   known(data.schedule.settings, [
     'semester',
     'startDate',

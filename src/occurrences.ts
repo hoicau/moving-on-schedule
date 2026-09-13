@@ -4,7 +4,6 @@ import {
   courseOccursInWeek,
   currentWeek,
   dateAtWeek,
-  isPeriodCourse,
   localDate,
   type Course,
   type Settings,
@@ -33,14 +32,6 @@ export function occurrenceIsPast(entry: Occurrence, now: Date) {
   );
 }
 
-// Missing bell times cannot order a period course against a clock-time course.
-// Keep both candidates visible until their relative order can be established.
-function definitelyBefore(a: Occurrence, b: Occurrence) {
-  if (a.start && b.start) return a.start < b.start;
-  if (isPeriodCourse(a.course) && isPeriodCourse(b.course))
-    return a.course.start < b.course.start;
-  return false;
-}
 export function recentCourses(
   courses: Course[],
   settings: Settings,
@@ -75,14 +66,19 @@ export function recentCourses(
     }
     if (candidates.length) break;
   }
-  const next = candidates.filter(
-    (entry) => !candidates.some((other) => definitelyBefore(other, entry)),
-  );
+  // Unknown times cannot establish a next class or justify skipping today's
+  // uncertain courses in favor of a later date.
+  const next =
+    untimed.length || candidates.some((entry) => !entry.start)
+      ? []
+      : candidates.filter(
+          (entry) => !candidates.some((other) => other.start! < entry.start!),
+        );
   return { current, untimed, next };
 }
 
-// Preview several occurrences across days, retaining all immediate candidates
-// when missing times or overlaps make a three-item cutoff misleading.
+// Preview several occurrences across days, retaining all current/next classes
+// and today's uncertain courses beyond the normal three-item cutoff.
 export function upcomingCourses(
   courses: Course[],
   settings: Settings,

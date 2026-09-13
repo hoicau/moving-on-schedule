@@ -260,7 +260,7 @@
     .bottom-nav :is(button, a):hover,
     .icon-button:hover:not(:disabled),
     .this-week:hover,
-    .grid-lines > button:hover,
+    .grid-lines > button:enabled:hover,
     .weekend-empty > button:hover,
     .rail-link:hover,
     .course-list-row:hover
@@ -268,7 +268,7 @@
   background: var(--surface-hover);
   color: var(--text);
 }
-[data-theme='dark'] .grid-lines > button:hover:after {
+[data-theme='dark'] .grid-lines > button:enabled:hover:after {
   color: #b8dfff;
 }
 [data-theme='dark'] .button.secondary {

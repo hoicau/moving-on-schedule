@@ -58,6 +58,9 @@
           "additionalProperties": false,
           "required": ["showRemarks", "showWeekend"],
           "properties": {
+            "showTeacher": {
+              "type": "boolean"
+            },
             "showRemarks": {
               "type": "boolean"
             },

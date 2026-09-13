@@ -16,6 +16,7 @@ import {
 } from './schedule';
 import { createWorkbook, readImport } from './importer';
 import { recentCourses } from './occurrences';
+import { TIMED_SETTINGS } from './testFixtures';
 
 test('period breaks require a known gap between adjacent bell times', () => {
   assert.deepEqual(
@@ -140,7 +141,7 @@ test('a one-period timetable gets a usable Excel template', async () => {
 
 test('a midweek semester start preserves weekdays and counts partial first weeks', () => {
   const settings = {
-    ...DEFAULT_SETTINGS,
+    ...TIMED_SETTINGS,
     startDate: '2026-10-01',
     totalWeeks: 2,
   };
@@ -178,7 +179,7 @@ test('a midweek semester start preserves weekdays and counts partial first weeks
 });
 
 test('a Sunday start has a one-day first week and retains future Monday courses', () => {
-  const settings = { ...DEFAULT_SETTINGS, startDate: '2026-09-13' };
+  const settings = { ...TIMED_SETTINGS, startDate: '2026-09-13' };
   const course = { ...SAMPLE_COURSES[0], weeks: [1, 2] };
   assert.equal(currentWeek(settings, new Date('2026-09-13T23:59:59')), 1);
   const next = recentCourses(

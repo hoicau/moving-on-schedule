@@ -279,7 +279,8 @@ export const en = {
   'schedule.noMoreToday': 'No more classes today',
   'schedule.hiddenWeekend': 'Weekend classes are hidden. Show weekends',
   'display.title': 'Display',
-  'display.showRemarks': 'Show remarks on home',
+  'display.showTeacher': 'Show teacher',
+  'display.showRemarks': 'Show remarks',
   'display.saveFailed':
     'Display updated, but this browser could not save your choice.',
   'footer.sourceCode': 'Source code',
@@ -288,15 +289,14 @@ export const en = {
   'footer.uncommittedChanges': '* Includes uncommitted changes',
   'footer.viewCommit': 'View commit {0}',
 
-  'course.details': 'Course details',
   'course.time': 'Time',
   'course.conflictDetails':
     'Overlaps with: {0}. Check the course weeks and times.',
   'settings.invalidTime': 'Enter a valid time or leave it blank.',
   'settings.optionalTimes':
     'Optional, blank by default. Use 24-hour HH:mm (e.g. 08:00 or 14:30). Fill in times to identify classes in progress.',
-  'schedule.todayTimeUnknown': 'Today · time not set',
   'time.notSet': 'Time not set',
+  'time.periodsNotSet': '{0} (Time not set)',
   'time.incomplete': 'Time incomplete',
   'time.startsAt': 'Starts at {0}',
   'time.endsAt': 'Ends at {0}',
@@ -305,7 +305,8 @@ export const en = {
   'calendar.dateWeek': '{0}, week {1}',
   'import.headerHelp':
     'Start with a header row. Required columns: {0}. Room, teacher, and remarks are optional. Use one row per weekly meeting; repeat a course for multiple time slots. The first nonempty worksheet is read, and its name appears in the preview.',
-  'help.display': 'Use Display to show or hide weekends and course remarks.',
+  'help.display':
+    'Use Display to show or hide weekends, teachers, and course remarks.',
   'help.manageCourses':
     'Choose Add course or an empty cell. Enter two period numbers within the configured daily count or two 24-hour times (08:00, 09:40); use the same format at both ends. Clock-time courses appear under By time and work without daily times. Open a course for details, then edit or delete it. Missing daily times can leave mixed-format conflicts uncertain.',
   'timing.start': 'Start time / period',
@@ -603,7 +604,8 @@ export const translations: Record<
     'schedule.noMoreToday': '今天没有后续课程',
     'schedule.hiddenWeekend': '周末有课程，点击显示周末',
     'display.title': '显示',
-    'display.showRemarks': '在首页显示备注',
+    'display.showTeacher': '显示教师',
+    'display.showRemarks': '显示备注',
     'display.saveFailed': '显示已更新，但浏览器暂时无法记住这个选择。',
     'footer.sourceCode': '源代码',
     'footer.motto': '把日常过成喜欢的番。',
@@ -611,14 +613,13 @@ export const translations: Record<
     'footer.uncommittedChanges': '* 包含未提交的更改',
     'footer.viewCommit': '查看 commit {0}',
 
-    'course.details': '课程详情',
     'course.time': '时间',
     'course.conflictDetails': '与以下课程时间重叠：{0}。请核对周次和时间。',
     'settings.invalidTime': '请填写有效时间，或留空。',
     'settings.optionalTimes':
       '默认留空，可选填。使用 24 小时制 HH:mm（如 08:00 或 14:30）；填写后可判断正在进行的课程。',
-    'schedule.todayTimeUnknown': '今日课程 · 时间未设置',
     'time.notSet': '时间未设置',
+    'time.periodsNotSet': '{0}（时间未设置）',
     'time.incomplete': '时间未填完整',
     'time.startsAt': '{0} 开始',
     'time.endsAt': '{0} 结束',
@@ -627,7 +628,7 @@ export const translations: Record<
     'calendar.dateWeek': '{0}，第 {1} 周',
     'import.headerHelp':
       '第一行是表头： {0} 为必需列；教室、教师、备注为选填。每行是一段上课安排，同一课程多个时间请分行填写。读取第一个非空工作表，导入前会展示工作表名称。',
-    'help.display': '在「显示」中选择是否显示周末和课程备注。',
+    'help.display': '在「显示」中选择是否显示周末、教师和课程备注。',
     'help.manageCourses':
       '点击「添加课程」或空白格。起止两端填写已设置范围内的整数节次或 24 小时制时间（08:00、09:40），格式须一致。时间课程显示在「按时间」区域，无需填写每日作息。点击课程查看详情，再编辑或删除。作息缺失时，两类课程之间的冲突可能无法确定。',
     'timing.start': '开始时间/节次',
@@ -919,7 +920,8 @@ export const translations: Record<
     'schedule.noMoreToday': '今天沒有後續課程',
     'schedule.hiddenWeekend': '週末有課程，點擊顯示週末',
     'display.title': '顯示',
-    'display.showRemarks': '在首頁顯示備註',
+    'display.showTeacher': '顯示教師',
+    'display.showRemarks': '顯示備註',
     'display.saveFailed': '顯示已更新，但瀏覽器暫時無法記住這個選擇。',
     'footer.sourceCode': '原始碼',
     'footer.motto': '把日常過成喜歡的番。',
@@ -927,14 +929,13 @@ export const translations: Record<
     'footer.uncommittedChanges': '* 包含未提交的變更',
     'footer.viewCommit': '查看 commit {0}',
 
-    'course.details': '課程詳情',
     'course.time': '時間',
     'course.conflictDetails': '與以下課程時間重疊：{0}。請核對週次和時間。',
     'settings.invalidTime': '請填寫有效時間，或留空。',
     'settings.optionalTimes':
       '預設留空，可選填。使用 24 小時制 HH:mm（如 08:00 或 14:30）；填寫後可判斷正在進行的課程。',
-    'schedule.todayTimeUnknown': '今日課程 · 時間未設定',
     'time.notSet': '時間未設定',
+    'time.periodsNotSet': '{0}（時間未設定）',
     'time.incomplete': '時間未填完整',
     'time.startsAt': '{0} 開始',
     'time.endsAt': '{0} 結束',
@@ -943,7 +944,7 @@ export const translations: Record<
     'calendar.dateWeek': '{0}，第 {1} 週',
     'import.headerHelp':
       '第一列為欄位名稱：{0} 為必填；教室、教師、備註為選填。每列是一段上課安排，同一課程有多個時段時請分列填寫。讀取第一個非空工作表，匯入前會顯示工作表名稱。',
-    'help.display': '在「顯示」中選擇是否顯示週末和課程備註。',
+    'help.display': '在「顯示」中選擇是否顯示週末、教師和課程備註。',
     'help.manageCourses':
       '點選「新增課程」或空白格。起止兩端填寫已設定範圍內的整數節次或 24 小時制時間（08:00、09:40），格式須一致。時間課程顯示在「按時間」區域，無須填寫每日作息。點選課程查看詳情，再編輯或刪除。作息缺失時，兩類課程之間的衝突可能無法確定。',
     'timing.start': '開始時間/節次',

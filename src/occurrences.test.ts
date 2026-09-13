@@ -183,7 +183,7 @@ test('display preferences default safely and preserve existing remarks independe
   assert.equal(decodeSaved(raw).courses[0].note, 'Keep my old remark');
 });
 
-test('blank times never invent an ongoing class and still preview future dates', () => {
+test('blank times never invent current or next classes and still preview future dates', () => {
   assert.ok(
     DEFAULT_SETTINGS.periods.every(
       (period) => period.start === '' && period.end === '',
@@ -197,11 +197,42 @@ test('blank times never invent an ongoing class and still preview future dates',
   );
   assert.equal(result.current.length, 0);
   assert.equal(result.untimed[0].course.id, monday.id);
-  assert.equal(result.next[0].week, 3);
-  assert.equal(result.next[0].start, null);
+  assert.deepEqual(result.next, []);
   const later = recentCourses([monday], blank, new Date('2026-09-08T12:00:00'));
   assert.equal(later.untimed.length, 0);
-  assert.equal(later.next[0].week, 3);
+  assert.deepEqual(later.next, []);
+  assert.equal(
+    upcomingCourses([monday], blank, new Date('2026-09-08T12:00:00'))[0].week,
+    3,
+  );
+});
+
+test('unknown times prevent next-class guesses across days and mixed timing types', () => {
+  const unknown = { ...monday, weeks: [1] };
+  const tomorrow = { ...unknown, id: 'tomorrow', day: 2 };
+  const timed = {
+    ...unknown,
+    id: 'timed',
+    timing: 'time' as const,
+    start: '14:00',
+    end: '15:00',
+  };
+  const blank = { ...settings, periods: DEFAULT_SETTINGS.periods };
+  const now = new Date('2026-09-07T12:00:00');
+  for (const courses of [
+    [unknown, tomorrow],
+    [unknown, timed],
+    [unknown, { ...timed, day: 2 }],
+    [tomorrow, { ...timed, day: 2 }],
+  ]) {
+    assert.deepEqual(recentCourses(courses, blank, now).next, []);
+    assert.equal(upcomingCourses(courses, blank, now).length, courses.length);
+  }
+  assert.equal(recentCourses([timed], blank, now).next[0].course.id, timed.id);
+  assert.equal(
+    recentCourses([unknown, tomorrow], settings, now).next[0].course.id,
+    tomorrow.id,
+  );
 });
 
 test('partial times expose uncertainty until enough information is available', () => {

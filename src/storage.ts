@@ -120,13 +120,14 @@ export async function loadUserData(
       const saved = JSON.parse(baseline[displayKey]!);
       if (!saved || typeof saved !== 'object' || Array.isArray(saved))
         throw new Error('Invalid legacy display.');
-      for (const key of ['showRemarks', 'showWeekend']) {
+      for (const key of ['showRemarks', 'showWeekend', 'showTeacher']) {
         if (key in saved && typeof saved[key] !== 'boolean')
           throw new Error('Invalid legacy display.');
       }
       data.preferences.display = {
         showRemarks: saved.showRemarks ?? false,
         showWeekend: saved.showWeekend ?? true,
+        ...('showTeacher' in saved ? { showTeacher: saved.showTeacher } : {}),
       };
     }
     validateUserData(data);

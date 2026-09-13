@@ -8,16 +8,18 @@ Choose **Data management → Export all data (JSON)**. Import through **Data man
 
 The machine-readable contract is [backup-v1.schema.json](../public/schemas/backup-v1.schema.json), published at `/schemas/backup-v1.schema.json`. It uses [JSON Schema Draft 2020-12](https://json-schema.org/draft/2020-12/json-schema-core). [Example backup](examples/backup-v1.json) includes a valid checksum.
 
-| Field               | Meaning                                                                                       |
-| ------------------- | --------------------------------------------------------------------------------------------- |
-| `format`            | Exactly `moving-on-schedule`                                                                  |
-| `version`           | Backup format version, currently `1`                                                          |
-| `exportedAt`        | UTC timestamp produced by `Date.toISOString()`                                                |
-| `schedule.courses`  | Every meeting, preserving IDs, text, colors, remarks, week order and timing                   |
-| `schedule.settings` | Semester name, first date, total weeks and every daily period time                            |
-| `schedule.isDemo`   | Keeps the distinction between built-in demo text and user text                                |
-| `preferences`       | Effective `locale`, theme preference (`light`, `dark`, `system`) and both display preferences |
-| `integrity`         | `{ "algorithm": "SHA-256", "value": "<64 lowercase hex characters>" }`                        |
+| Field               | Meaning                                                                                  |
+| ------------------- | ---------------------------------------------------------------------------------------- |
+| `format`            | Exactly `moving-on-schedule`                                                             |
+| `version`           | Backup format version, currently `1`                                                     |
+| `exportedAt`        | UTC timestamp produced by `Date.toISOString()`                                           |
+| `schedule.courses`  | Every meeting, preserving IDs, text, colors, remarks, week order and timing              |
+| `schedule.settings` | Semester name, first date, total weeks and every daily period time                       |
+| `schedule.isDemo`   | Keeps the distinction between built-in demo text and user text                           |
+| `preferences`       | Effective `locale`, theme preference (`light`, `dark`, `system`) and display preferences |
+| `integrity`         | `{ "algorithm": "SHA-256", "value": "<64 lowercase hex characters>" }`                   |
+
+`preferences.display.showTeacher` is optional and defaults to hidden when absent, so existing v1 backups remain importable. New exports preserve this choice when it has been set.
 
 Course `timing` is explicitly `period` or `time`; legacy period courses gain `timing: "period"` on export. Periods use inclusive integer endpoints, 1–30; clock times use zero-padded 24-hour `HH:mm` and must end later the same day. Days are 1=Monday through 7=Sunday. Weeks must fit the semester and period references must fit the daily period list. Empty or partially filled daily times are retained. Course IDs must be unique. Overlapping courses remain valid.
 

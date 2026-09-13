@@ -872,10 +872,10 @@ h1 {
   position: relative;
   width: 100%;
 }
-.grid-lines > button:hover {
+.grid-lines > button:enabled:hover {
   background: #e6eff6;
 }
-.grid-lines > button:hover:after {
+.grid-lines > button:enabled:hover:after {
   content: '+';
   font-size: 18px;
   color: #54748c;
