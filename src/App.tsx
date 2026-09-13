@@ -35,6 +35,7 @@ import {
   ChevronRight,
   Clock3,
   Coffee,
+  Database,
   FileSpreadsheet,
   FileJson,
   GraduationCap,
@@ -448,7 +449,7 @@ function CourseForm({
     </Modal>
   );
 }
-function ImportModal({
+function DataManagementModal({
   settings,
   totalWeeks,
   isDemo,
@@ -456,6 +457,9 @@ function ImportModal({
   onApply,
   onClose,
   notify,
+  onExportCourses,
+  onExportAll,
+  canExport,
 }: {
   totalWeeks: number;
   isDemo: boolean;
@@ -464,6 +468,9 @@ function ImportModal({
   onApply: (courses: Course[], replace: boolean) => void;
   onClose: () => void;
   notify: (text: string) => void;
+  onExportCourses: () => Promise<void>;
+  onExportAll: () => Promise<void>;
+  canExport: boolean;
 }) {
   const { t, locale, days: DAYS, date: formatDate } = useI18n();
   const { store } = useUserData();
@@ -573,22 +580,66 @@ function ImportModal({
   }
   return (
     <Modal
-      title={t('ui.importTimetable')}
-      subtitle={t('import.filesHelp')}
+      title={t('dataManagement.title')}
       className="import-modal"
       onClose={onClose}
       wide
     >
-      <div className="import-steps">
-        <span className={!ready ? 'active' : 'done'}>
-          <b>{ready ? <Check size={12} /> : 1}</b>
-          {t('ui.chooseFile')}
-        </span>
-        <i />
-        <span className={ready ? 'active' : ''}>
-          <b>2</b>
-          {t('ui.previewImport')}
-        </span>
+      <div className="import-resources">
+        <div className="import-resource-actions">
+          <button
+            className="text-button"
+            type="button"
+            aria-expanded={showFormatGuide}
+            aria-controls="import-format-guide"
+            onClick={() => setShowFormatGuide((shown) => !shown)}
+          >
+            <BookOpen size={16} />
+            {t('ui.viewFormatGuide')}
+            <ChevronDown className="format-chevron" size={14} />
+          </button>
+          <button className="text-button" type="button" onClick={template}>
+            <ArrowDownToLine size={16} />
+            {t('ui.downloadExcelTemplate')}
+          </button>
+          <button
+            className="text-button"
+            disabled={!canExport}
+            onClick={onExportCourses}
+          >
+            <FileSpreadsheet size={16} />
+            {t('ui.exportExcelTimetable')}
+          </button>
+          <button
+            className="text-button"
+            disabled={!canExport}
+            onClick={onExportAll}
+          >
+            <FileJson size={16} />
+            {t('backup.exportAll')}
+          </button>
+        </div>
+        <div
+          id="import-format-guide"
+          className="import-format-guide"
+          hidden={!showFormatGuide}
+        >
+          <p>
+            {t('import.headerHelp', {
+              0: (locale === 'en'
+                ? ['name', 'day', 'start', 'end', 'weeks']
+                : [
+                    'course.name',
+                    'ui.day',
+                    'ui.firstPeriod',
+                    'ui.lastPeriod',
+                    'ui.weeks',
+                  ].map((tKey) => t(tKey))
+              ).join(locale === 'en' ? ', ' : '、'),
+            })}
+          </p>
+          <p>{t('ui.daysMonSunOr17Periods112')}</p>
+        </div>
       </div>
       <input
         ref={input}
@@ -636,48 +687,6 @@ function ImportModal({
         )}
         <small>{t('import.acceptedFiles')}</small>
       </button>
-      {!isJson && (
-        <div className="import-resources">
-          <div className="import-resource-actions">
-            <button className="text-button" type="button" onClick={template}>
-              <ArrowDownToLine size={16} />
-              {t('ui.downloadExcelTemplate')}
-            </button>
-            <button
-              className="text-button"
-              type="button"
-              aria-expanded={showFormatGuide}
-              aria-controls="import-format-guide"
-              onClick={() => setShowFormatGuide((shown) => !shown)}
-            >
-              <BookOpen size={16} />
-              {t('ui.viewFormatGuide')}
-              <ChevronDown className="format-chevron" size={14} />
-            </button>
-          </div>
-          <div
-            id="import-format-guide"
-            className="import-format-guide"
-            hidden={!showFormatGuide}
-          >
-            <p>
-              {t('import.headerHelp', {
-                0: (locale === 'en'
-                  ? ['name', 'day', 'start', 'end', 'weeks']
-                  : [
-                      'course.name',
-                      'ui.day',
-                      'ui.firstPeriod',
-                      'ui.lastPeriod',
-                      'ui.weeks',
-                    ].map((tKey) => t(tKey))
-                ).join(locale === 'en' ? ', ' : '、'),
-              })}
-            </p>
-            <p>{t('ui.daysMonSunOr17Periods112')}</p>
-          </div>
-        </div>
-      )}
       {error && (
         <div className="notice error" role="alert">
           {error}
@@ -1383,6 +1392,15 @@ export default function App() {
         <WeekJourney settings={settings} week={week} now={now} />
         <div className="sidebar-grow" />
         <div className="bottom-nav">
+          <button
+            onClick={() => {
+              setMobileNav(false);
+              setModal('import');
+            }}
+          >
+            <Database size={18} />
+            {t('dataManagement.title')}
+          </button>
           <button onClick={() => setModal('settings')}>
             <Settings2 size={18} />
             {t('ui.timetableSettings')}
@@ -1490,13 +1508,6 @@ export default function App() {
                   <ArrowUpRight size={13} />
                 </button>
               )}
-              <button
-                className="button secondary"
-                onClick={() => setModal('import')}
-              >
-                <Upload size={16} />
-                {t('ui.importTimetable')}
-              </button>
               <button className="button primary" onClick={() => add()}>
                 <Plus size={18} />
                 {t('course.add')}
@@ -1655,16 +1666,6 @@ export default function App() {
                         />
                         {t('display.showRemarks')}
                       </label>
-                      <div className="display-exports">
-                        <button onClick={exportCourses}>
-                          <FileSpreadsheet size={16} />
-                          {t('ui.exportExcelTimetable')}
-                        </button>
-                        <button onClick={exportAllData}>
-                          <FileJson size={16} />
-                          {t('backup.exportAll')}
-                        </button>
-                      </div>
                     </div>
                   </details>
                 </div>
@@ -2076,7 +2077,10 @@ export default function App() {
         />
       )}
       {modal === 'import' && (
-        <ImportModal
+        <DataManagementModal
+          onExportCourses={exportCourses}
+          onExportAll={exportAllData}
+          canExport={canExport}
           settings={settings}
           totalWeeks={settings.totalWeeks}
           isDemo={isDemo}

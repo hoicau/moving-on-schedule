@@ -87,12 +87,6 @@ html[lang='en'] .week-progress {
     width: 100%;
     min-width: 0;
   }
-  html[lang='en'] .import-steps {
-    gap: 9px;
-  }
-  html[lang='en'] .import-steps i {
-    width: 25px;
-  }
   html[lang='en'] .quote-card h3 {
     font-size: 16px;
   }

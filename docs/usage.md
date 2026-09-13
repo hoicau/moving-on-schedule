@@ -3,7 +3,7 @@
 ## Set up a timetable
 
 1. Open **Timetable settings** at the bottom of the sidebar. Set the **First day of semester**, semester length (1–30 weeks), and **Periods per day** (1–30, default 12). The first day may be any weekday. Set period start/end times if needed. Use 24-hour `HH:mm` (for example `08:00` or `14:30`). Times default to blank; existing saved times are preserved.
-2. Choose **Start fresh** to clear the sample, or **Import Timetable** to import your schedule. Review the replacement option before confirming.
+2. Choose **Start fresh** to clear the sample, or **Data management** in the sidebar to import your schedule. Review the replacement option before confirming.
 3. Use **Add course** or an empty timetable cell to add a class. Click a card for details, then choose **Edit course** to edit or delete it. In **Start time / period** and **End time / period**, use period integers (`1`, `2`) or 24-hour clock times (`08:00`, `09:40`). Both ends must use the same format; clock-time courses must end later on the same day.
 4. Navigate weeks using the arrows or sidebar calendar. Search by course, teacher, or room; use **All courses** in the sidebar for a compact overview. The timetable always uses the weekly grid.
 
@@ -29,7 +29,7 @@ Use the sun, moon, and monitor buttons in the top bar for **Light mode**, **Dark
 
 ## Import Excel or CSV
 
-Click **Import timetable** at the top of the home page, download the Excel template, and replace or delete its example row. Select or drag in your file, review the preview, and confirm an append or full replacement.
+Click **Data management** in the sidebar, download the Excel template, and replace or delete its example row. Select or drag in your file, review the preview, and confirm an append or full replacement.
 
 Templates and export headers use the selected language. The `start` and `end` columns accept period numbers or clock times using the same format in each row. Combined Chinese headers (`开始时间/节次`, `结束时间/节次`) and legacy period headers are accepted. Imports accept English, Simplified Chinese, and Traditional Chinese headers regardless of the interface language. Traditional headers include `課程名稱`, `開始節次`, `結束節次`, `週次`, `教師`, and `備註`; `週一`–`週日` and `禮拜一`–`禮拜日` are accepted day names.
 
@@ -64,9 +64,9 @@ Design,Wed,14:00,15:30,"1,3,5",Studio,Ada,
 
 ## Export and storage
 
-Use **Display → Export all data (JSON)** to back up all courses, IDs, remarks, colors, semester settings, daily times, language, appearance and display preferences. Export includes the current edits even if a local save failed. Use **Import timetable** to validate and preview a backup, then confirm a complete replacement. Invalid, damaged or unsupported files leave current data untouched. See [backup format and recovery details](backup-format.md).
+Use **Data management → Export all data (JSON)** to back up all courses, IDs, remarks, colors, semester settings, daily times, language, appearance and display preferences. Export includes the current edits even if a local save failed. Use **Data management** to validate and preview a backup, then confirm a complete replacement. Invalid, damaged or unsupported files leave current data untouched. See [backup format and recovery details](backup-format.md).
 
-**Display → Export Excel timetable** exports course meetings for spreadsheet editing and later appending/replacing through the spreadsheet importer. Excel does not include semester settings, daily times or custom colors.
+**Data management → Export Excel timetable** exports course meetings for spreadsheet editing and later appending/replacing through the spreadsheet importer. Excel does not include semester settings, daily times or custom colors.
 
 Changes are saved as one complete local snapshot. Successful saves are verified by reading the snapshot back; normal saving has no status row on the home page. A failure keeps edits in memory and offers JSON export and retry. Damaged storage is preserved with a raw recovery download. Changes in another tab pause writes; export your work before confirming **Load saved version**. Restoring a JSON backup also checks that saved data did not change during preview.
 

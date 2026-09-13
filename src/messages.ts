@@ -99,6 +99,7 @@ export const en = {
   'schedule.title': 'My timetable',
   'course.all': 'All courses',
   'ui.importTimetable': 'Import timetable',
+  'dataManagement.title': 'Data management',
   'ui.gettingStarted': 'Getting started',
   'ui.openNavigation': 'Open navigation',
   'ui.appearance': 'Appearance',
@@ -155,8 +156,7 @@ export const en = {
   'backup.failed': 'Could not read this backup. Please try again.',
   'import.filesHelp':
     'Import courses from a spreadsheet, or restore a complete JSON backup.',
-  'import.dropFile':
-    'Drop your timetable or backup here, or click to choose a file',
+  'import.dropFile': 'Drag a file here or click to choose a file',
   'import.acceptedFiles':
     'Supports spreadsheet files (XLSX/CSV, up to 10 MB) or backup files (JSON, up to 50 MB)',
   'backup.ready': 'Ready to restore',
@@ -186,10 +186,10 @@ export const en = {
   'ui.addAndManageCourses': 'Add and manage courses',
   'help.importTitle': 'Import Excel or CSV',
   'ui.downloadTheTemplateAndUseOneMeetingPerRow':
-    'Open Import timetable and download the template. Fill in one class time slot per row, then upload the file. Check the preview and choose to add to or replace existing courses.',
+    'Open Data management in the sidebar and download the template. Fill in one class time slot per row, then upload the file. Check the preview and choose to add to or replace existing courses.',
   'help.storageTitle': 'Storage and export',
   'ui.coursesStayInThisBrowserWithNoSignIn':
-    'Data stays in this browser. Use Display to export a complete JSON backup, and Import timetable to restore it. Excel exports courses only.',
+    'Data stays in this browser. Use Data management in the sidebar to export and restore a complete JSON backup. Excel exports courses only.',
   'ui.dismissNotification': 'Dismiss notification',
   'ui.chooseEitherOddOrEvenWeeks': 'Choose either odd or even weeks.',
   'ui.enterTeachingWeeksEG116': 'Enter teaching weeks, e.g. 1-16.',
@@ -432,6 +432,7 @@ export const translations: Record<
     'schedule.title': '我的课表',
     'course.all': '全部课程',
     'ui.importTimetable': '导入课表',
+    'dataManagement.title': '数据管理',
     'ui.gettingStarted': '使用指南',
     'ui.openNavigation': '打开导航',
     'ui.appearance': '外观模式',
@@ -485,7 +486,7 @@ export const translations: Record<
     'backup.tooLarge': '请选择小于 50 MiB 的 JSON 备份。',
     'backup.failed': '无法读取此备份，请重试。',
     'import.filesHelp': '导入表格中的课程，或恢复完整的 JSON 备份。',
-    'import.dropFile': '将课表或备份拖放到这里，或点击选择文件',
+    'import.dropFile': '将文件拖放到这里或点击选择文件',
     'import.acceptedFiles':
       '支持表格文件（XLSX/CSV，最大 10 MB）或备份文件（JSON，最大 50 MB）',
     'backup.ready': '备份已验证',
@@ -514,10 +515,10 @@ export const translations: Record<
     'ui.addAndManageCourses': '添加与管理课程',
     'help.importTitle': '导入 Excel 或 CSV',
     'ui.downloadTheTemplateAndUseOneMeetingPerRow':
-      '打开「导入课表」，下载模板并填写，每行对应一个上课时段。上传后检查预览，选择追加或替换现有课程。',
+      '从侧栏打开「数据管理」，下载模板并填写，每行对应一个上课时段。上传后检查预览，选择追加或替换现有课程。',
     'help.storageTitle': '存储与导出',
     'ui.coursesStayInThisBrowserWithNoSignIn':
-      '数据仅保存在当前浏览器。通过「显示」导出 JSON 完整备份，在「导入课表」中恢复；Excel 仅导出课程。',
+      '数据仅保存在当前浏览器。通过侧栏「数据管理」导出和恢复 JSON 完整备份；Excel 仅导出课程。',
     'ui.dismissNotification': '关闭提示',
     'ui.chooseEitherOddOrEvenWeeks': '请分别填写单周或双周',
     'ui.enterTeachingWeeksEG116': '请填写上课周次，例如 1-16',
@@ -747,6 +748,7 @@ export const translations: Record<
     'schedule.title': '我的課表',
     'course.all': '全部課程',
     'ui.importTimetable': '匯入課表',
+    'dataManagement.title': '資料管理',
     'ui.gettingStarted': '使用指南',
     'ui.openNavigation': '開啟導覽',
     'ui.appearance': '外觀模式',
@@ -800,7 +802,7 @@ export const translations: Record<
     'backup.tooLarge': '請選擇小於 50 MiB 的 JSON 備份。',
     'backup.failed': '無法讀取此備份，請重試。',
     'import.filesHelp': '匯入表格中的課程，或還原完整的 JSON 備份。',
-    'import.dropFile': '將課表或備份拖放到這裡，或點擊選擇檔案',
+    'import.dropFile': '將檔案拖放到這裡或點擊選擇檔案',
     'import.acceptedFiles':
       '支援表格檔案（XLSX/CSV，最大 10 MB）或備份檔案（JSON，最大 50 MB）',
     'backup.ready': '備份已驗證',
@@ -829,10 +831,10 @@ export const translations: Record<
     'ui.addAndManageCourses': '新增與管理課程',
     'help.importTitle': '匯入 Excel 或 CSV',
     'ui.downloadTheTemplateAndUseOneMeetingPerRow':
-      '開啟「匯入課表」，下載範本並填寫，每列對應一個上課時段。上傳後檢查預覽，選擇加入或取代現有課程。',
+      '從側欄開啟「資料管理」，下載範本並填寫，每列對應一個上課時段。上傳後檢查預覽，選擇加入或取代現有課程。',
     'help.storageTitle': '儲存與匯出',
     'ui.coursesStayInThisBrowserWithNoSignIn':
-      '資料僅儲存在目前瀏覽器。透過「顯示」匯出 JSON 完整備份，在「匯入課表」中還原；Excel 僅匯出課程。',
+      '資料僅儲存在目前瀏覽器。透過側欄「資料管理」匯出和還原 JSON 完整備份；Excel 僅匯出課程。',
     'ui.dismissNotification': '關閉提示',
     'ui.chooseEitherOddOrEvenWeeks': '請分別填寫單週或雙週',
     'ui.enterTeachingWeeksEG116': '請填寫上課週次，例如 1-16',

@@ -21,20 +21,27 @@ async function menu(page: Page) {
     (element as HTMLDetailsElement).open = true;
   });
 }
+async function dataManagement(page: Page) {
+  if (await page.locator('.mobile-menu').isVisible()) {
+    await page.locator('.mobile-menu').click();
+  }
+  await page
+    .getByRole('button', { name: /^(Data management|数据管理|資料管理)$/ })
+    .click();
+}
 async function exported(page: Page) {
-  await menu(page);
+  await dataManagement(page);
   const downloading = page.waitForEvent('download');
   await page
+    .getByRole('dialog')
     .getByRole('button', { name: 'Export all data (JSON)', exact: true })
     .click();
   const download = await downloading;
+  await page.keyboard.press('Escape');
   return JSON.parse(await readFile((await download.path())!, 'utf8'));
 }
 async function importFile(page: Page, data: unknown) {
-  await page
-    .locator('.heading-actions')
-    .getByRole('button', { name: 'Import timetable', exact: true })
-    .click();
+  await dataManagement(page);
   await page
     .getByLabel('Choose timetable file', { exact: true })
     .setInputFiles({
@@ -228,7 +235,7 @@ test('two tabs cannot overwrite each other and confirmed reload adopts the saved
   );
 });
 
-test('backup actions and error notices stay usable across mobile, locales, and themes', async ({
+test('display options and data management stay usable across mobile, locales, and themes', async ({
   page,
 }) => {
   for (const locale of ['en', 'zh-Hans', 'zh-Hant']) {
@@ -263,6 +270,20 @@ test('backup actions and error notices stay usable across mobile, locales, and t
             () => document.documentElement.scrollWidth <= innerWidth,
           ),
         ).toBe(true);
+        await dataManagement(page);
+        await expect(page.locator('.sidebar')).not.toHaveClass(/open/);
+        for (const button of await page
+          .locator('.import-resource-actions button')
+          .all()) {
+          await button.scrollIntoViewIfNeeded();
+          await expect(button).toBeInViewport();
+        }
+        expect(
+          await page
+            .getByRole('dialog')
+            .evaluate((el) => el.scrollWidth <= el.clientWidth),
+        ).toBe(true);
+        await page.keyboard.press('Escape');
       }
     }
   }
@@ -362,7 +383,7 @@ test('JSON preview and confirmation remain reachable in all locales and short vi
     await page.locator('.language-select').selectOption(locale);
     for (const theme of [0, 1]) {
       await page.locator('.theme-switch button').nth(theme).click();
-      await page.locator('.heading-actions .button.secondary').click();
+      await dataManagement(page);
       await page.locator('input[type=file]').setInputFiles({
         name: 'a-long-but-valid-backup-filename.json',
         mimeType: 'application/json',

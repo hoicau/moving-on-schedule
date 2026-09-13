@@ -133,6 +133,7 @@ main {
   width: 100%;
   min-width: 0;
   min-height: 32px;
+  padding-inline: 12px;
   border-radius: 5px;
 }
 .search-box input:focus-visible {
@@ -199,14 +200,6 @@ main {
 }
 .storage-actions .text-button {
   margin-left: 0;
-}
-.display-exports {
-  border-top: 1px solid var(--border);
-  margin-top: 4px;
-  padding-top: 4px;
-}
-.display-exports svg {
-  flex-shrink: 0;
 }
 .backup-preview .preview-heading {
   gap: 12px;

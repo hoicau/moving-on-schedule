@@ -4,7 +4,7 @@ Application release: **v0.1** (`0.1.0`). Backup format `1` and storage format `1
 
 ## Portable JSON backup
 
-Choose **Display → Export all data (JSON)**. Import through **Import timetable**. The app validates the entire file, shows the semester and meeting count, and requires confirmation before replacing all courses, settings, and preferences. JSON restoration is a complete replacement; use Excel/CSV import for appending meetings. Invalid files never change current data.
+Choose **Data management → Export all data (JSON)**. Import through **Data management**. The app validates the entire file, shows the semester and meeting count, and requires confirmation before replacing all courses, settings, and preferences. JSON restoration is a complete replacement; use Excel/CSV import for appending meetings. Invalid files never change current data.
 
 The machine-readable contract is [backup-v1.schema.json](../public/schemas/backup-v1.schema.json), published at `/schemas/backup-v1.schema.json`. It uses [JSON Schema Draft 2020-12](https://json-schema.org/draft/2020-12/json-schema-core). [Example backup](examples/backup-v1.json) includes a valid checksum.
 

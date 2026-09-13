@@ -4,7 +4,7 @@
 
 ## 完整备份与恢复
 
-通过「显示 → 导出全部数据（JSON）」下载备份，通过「导入课表」恢复。导入先验证完整文件，再显示学期与课程安排数量，确认后替换全部课程、设置和偏好。JSON 恢复为完整替换；追加课程仍使用 Excel/CSV。无效文件不会修改当前数据。
+通过「数据管理 → 导出全部数据（JSON）」下载备份，通过「数据管理」恢复。导入先验证完整文件，再显示学期与课程安排数量，确认后替换全部课程、设置和偏好。JSON 恢复为完整替换；追加课程仍使用 Excel/CSV。无效文件不会修改当前数据。
 
 正式定义见 [backup-v1.schema.json](../public/schemas/backup-v1.schema.json)，站点路径为 `/schemas/backup-v1.schema.json`。另附[有效备份示例](examples/backup-v1.json)。
 

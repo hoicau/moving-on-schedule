@@ -94,7 +94,6 @@
     .day-heading.today,
     .view-switch > button.active,
     .upcoming-date small,
-    .import-steps b,
     .preview-table th
   ) {
   background: var(--surface-hover);
@@ -139,7 +138,7 @@
 [data-theme='dark'] .break-top {
   border-top-color: var(--border) !important;
 }
-[data-theme='dark'] :is(.sidebar-rule, .import-steps i) {
+[data-theme='dark'] .sidebar-rule {
   background: var(--border);
 }
 [data-theme='dark'] :is(.brand > span:last-child, h1, .modal h2) {
@@ -223,7 +222,6 @@
     .course-form label > span,
     .course-form label > small,
     .privacy-note,
-    .import-steps,
     .drop-zone > small,
     .preview-heading small,
     .preview-table th,
@@ -246,8 +244,6 @@
     .day-heading.today > span,
     .weekend-empty > button,
     .week-progress strong,
-    .import-steps .active,
-    .import-steps .done,
     .drop-zone,
     .drop-zone > strong,
     .preview-heading strong,
@@ -281,7 +277,6 @@
 }
 [data-theme='dark'] .button.secondary:hover {
   background: var(--surface-hover);
-  border-color: #648ba9;
 }
 [data-theme='dark'] .toggle-track {
   background: #526c82;
@@ -352,7 +347,6 @@
 }
 [data-theme='dark'] .notice.error {
   background: #432d2e;
-  border-color: #815155;
   color: #ffbfb5;
 }
 [data-theme='dark'] :is(.notice.warning, .demo-badge) {
@@ -369,7 +363,6 @@
 }
 [data-theme='dark'] .toast {
   background: #203b54;
-  border-color: #426a8b;
   color: #d9edff;
   box-shadow: 0 8px 28px #050d1850;
 }
@@ -395,11 +388,7 @@
   border-color: var(--border);
 }
 
-[data-theme='dark'] .import-steps b {
-  color: var(--text);
-}
-[data-theme='dark'] .mini-grid button.is-today,
-[data-theme='dark'] .import-steps .active b {
+[data-theme='dark'] .mini-grid button.is-today {
   background: var(--accent);
   color: var(--accent-ink);
 }
