@@ -62,6 +62,15 @@ Pages 直接使用 `npm run build` 和 `dist`；Workers 配置用于按钮及 Wo
 
 参考：[Vite on Vercel](https://vercel.com/docs/frameworks/frontend/vite)、[Vite on Netlify](https://docs.netlify.com/build/frameworks/framework-setup-guides/vite/)。
 
+## 页脚备案信息
+
+构建前编辑 [`src/filing-config.ts`](../src/filing-config.ts)。ICP 与公安备案分别配置，各项 `text` 为空或仅包含空格时隐藏，默认均为空。
+
+- `icp`：在 `text` 中填写 ICP 备案号，并保留或更新对应的 `link`。
+- `publicSecurity`：从官方 HTML 代码中复制备案文字和完整的 `href`，分别填入 `text` 和 `link`。将下载的官方图标放进 `public/`，例如 `public/beian-icon.png`，然后将 `icon` 设为 `/beian-icon.png`。
+
+组件使用站点样式渲染这些字段。桌面端通过 gap 分隔各项，移动端每项独立一行，公安备案图标与备案文字保持同行。已有部署升级时，请将原 `src/icp-config.ts` 中的配置迁移到 `filingConfig.icp`。
+
 ## 上线后
 
 - 检查示例课表、手动编辑、文件导入导出，以及刷新后的数据保留。
@@ -70,4 +79,4 @@ Pages 直接使用 `npm run build` 和 `dist`；Workers 配置用于按钮及 Wo
 - Google Fonts 无法访问时使用系统字体。
 - 按需加载的 Excel 模块可能触发 chunk 较大的构建提示，不影响部署。
 
-最后更新：2026-09-12。
+最后更新：2026-09-16。

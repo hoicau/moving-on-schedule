@@ -62,6 +62,15 @@ Both support automatic Git deployments and custom domains. The current app has n
 
 References: [Vite on Vercel](https://vercel.com/docs/frameworks/frontend/vite), [Vite on Netlify](https://docs.netlify.com/build/frameworks/framework-setup-guides/vite/).
 
+## Footer filing information
+
+Edit [`src/filing-config.ts`](../src/filing-config.ts) before building. ICP and public security filings are configured independently; each entry is hidden when its `text` is empty or contains only whitespace. Both are empty by default.
+
+- `icp`: set `text` to your ICP filing number and keep or update its `link`.
+- `publicSecurity`: copy the filing text and complete `href` from the official HTML snippet into `text` and `link`. Download the official icon to `public/` (for example, `public/beian-icon.png`) and set `icon` to `/beian-icon.png`.
+
+The component renders these fields using the site's styles. Desktop items use a gap, while mobile displays each entry on a separate line. The public security icon stays beside its filing text. If migrating an existing deployment, move values from the former `src/icp-config.ts` into `filingConfig.icp`.
+
 ## After deployment
 
 - Verify the sample schedule, manual editing, file import/export, and persistence after reload.
@@ -69,4 +78,4 @@ References: [Vite on Vercel](https://vercel.com/docs/frameworks/frontend/vite), 
 - Localhost, preview addresses, and custom domains use separate storage. Export a JSON backup before changing origins, then restore it at the new origin.
 - Google Fonts has a system-font fallback. The lazy-loaded Excel module can produce a large-chunk build warning; this does not block deployment.
 
-Last updated: 2026-09-12.
+Last updated: 2026-09-16.

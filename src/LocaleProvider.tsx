@@ -30,8 +30,7 @@ function useLocaleState() {
   );
   useEffect(() => {
     document.documentElement.lang = locale;
-    document.title = `Moving-on Schedule · ${value.t('schedule.title')}`;
-  }, [locale, value]);
+  }, [locale]);
   return value;
 }
 const LocaleContext = createContext<ReturnType<typeof useLocaleState> | null>(

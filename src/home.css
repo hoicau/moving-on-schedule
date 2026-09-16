@@ -18,7 +18,10 @@ main {
 }
 .app-footer {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: flex-end;
+  gap: 12px;
   margin-top: 16px;
   color: var(--muted);
   font-size: 11px;
@@ -27,12 +30,22 @@ main {
 .app-version {
   white-space: nowrap;
 }
-.app-version a {
+.app-filing {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.app-filing img {
+  flex-shrink: 0;
+  object-fit: contain;
+}
+.app-footer a {
   text-decoration: underline;
   text-decoration-color: var(--border);
   text-underline-offset: 3px;
 }
-.app-version a:hover {
+.app-footer a:hover {
   color: var(--text);
   text-decoration-color: currentColor;
 }
@@ -478,7 +491,10 @@ html[lang='en'] .course-card-top {
 }
 @media (max-width: 640px) {
   .app-footer {
+    flex-direction: column;
     justify-content: center;
+    gap: 4px;
+    text-align: center;
   }
   .sidebar .brand {
     margin-bottom: 35px;
