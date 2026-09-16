@@ -62,12 +62,21 @@ Pages 直接使用 `npm run build` 和 `dist`；Workers 配置用于按钮及 Wo
 
 参考：[Vite on Vercel](https://vercel.com/docs/frameworks/frontend/vite)、[Vite on Netlify](https://docs.netlify.com/build/frameworks/framework-setup-guides/vite/)。
 
+## Cloudflare Fonts
+
+HTML 中的 stylesheet link 为英文和简体中文加载 Noto Sans SC，为繁体中文加载 Noto Sans TC。请保留 `index.html` 中的 Google Fonts `<link>`；Cloudflare Fonts 不支持改写 CSS `@import`。
+
+对于 Cloudflare zone 下的域名，在控制台开启 **Speed → Settings → Content Optimization → Cloudflare Fonts**。Cloudflare 会在支持的页面上改写字体定义，通过站点同源地址提供字体文件。仓库配置不会开启此控制台选项，单独部署到 `workers.dev` 或 `pages.dev` 也不会为自定义域名开启它。
+
+部署后检查浏览器 Network 面板，确认字体请求使用站点同源地址。本地预览、其他托管平台，以及 Cloudflare 无法转换的页面仍直接使用 Google Fonts；Web 字体无法加载时回退到系统 sans-serif。Cloudflare Fonts 与 APO 不兼容。
+
+参考：[Cloudflare Fonts](https://developers.cloudflare.com/speed/optimization/content/fonts/)。
+
 ## 上线后
 
 - 检查示例课表、手动编辑、文件导入导出，以及刷新后的数据保留。
 - 数据仍保存在每位用户的浏览器中，部署不提供账号、备份或跨设备同步。
 - 本地地址、预览域名、自定义域名的存储相互独立。更换地址前请先导出 JSON 备份，在新地址恢复全部数据。
-- Google Fonts 无法访问时使用系统字体。
 - 按需加载的 Excel 模块可能触发 chunk 较大的构建提示，不影响部署。
 
-最后更新：2026-09-12。
+最后更新：2026-09-16。

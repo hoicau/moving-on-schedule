@@ -62,11 +62,21 @@ Both support automatic Git deployments and custom domains. The current app has n
 
 References: [Vite on Vercel](https://vercel.com/docs/frameworks/frontend/vite), [Vite on Netlify](https://docs.netlify.com/build/frameworks/framework-setup-guides/vite/).
 
+## Cloudflare Fonts
+
+The HTML stylesheet link loads Noto Sans SC for English and Simplified Chinese, and Noto Sans TC for Traditional Chinese. Keep it as a Google Fonts `<link>` in `index.html`; Cloudflare Fonts does not rewrite CSS `@import` rules.
+
+For a domain in your Cloudflare zone, enable **Speed → Settings → Content Optimization → Cloudflare Fonts**. On supported pages, Cloudflare rewrites the font definitions and serves the font files from your site's origin. The repository configuration does not enable this dashboard setting, and a `workers.dev` or `pages.dev` deployment alone does not enable it for your custom domain.
+
+After deploying, check the browser Network panel to confirm that font requests use your own origin. Local previews, other hosting providers, and pages Cloudflare cannot transform use Google Fonts directly; system sans-serif remains the fallback when web fonts are unavailable. Cloudflare Fonts is not compatible with APO.
+
+Reference: [Cloudflare Fonts](https://developers.cloudflare.com/speed/optimization/content/fonts/).
+
 ## After deployment
 
 - Verify the sample schedule, manual editing, file import/export, and persistence after reload.
 - Data remains in each visitor's browser. A deployment does not add accounts, backups, or device synchronization.
 - Localhost, preview addresses, and custom domains use separate storage. Export a JSON backup before changing origins, then restore it at the new origin.
-- Google Fonts has a system-font fallback. The lazy-loaded Excel module can produce a large-chunk build warning; this does not block deployment.
+- The lazy-loaded Excel module can produce a large-chunk build warning; this does not block deployment.
 
-Last updated: 2026-09-12.
+Last updated: 2026-09-16.

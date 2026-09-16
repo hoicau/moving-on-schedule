@@ -1,3 +1,7 @@
+html[lang='zh-Hant'] {
+  font-family: 'Noto Sans TC', sans-serif;
+}
+
 .language-control {
   position: relative;
   display: flex;
