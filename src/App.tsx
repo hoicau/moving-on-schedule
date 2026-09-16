@@ -88,7 +88,7 @@ import {
   type BackupV1,
 } from './backup';
 import type { Snapshot } from './storage';
-import { BuildFooter } from './BuildFooter';
+import { Footer } from './Footer';
 
 const COLOR_NAMES = [
   'color.sage',
@@ -2041,7 +2041,7 @@ export default function App() {
               )}
             </section>
           </div>
-          <BuildFooter />
+          <Footer />
         </main>
       </div>
       {modal === 'detail' && editing && (
