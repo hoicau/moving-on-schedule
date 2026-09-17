@@ -7,3 +7,4 @@ test-results/
 /.dev.vars
 /.dev.vars.*
 playwright-report/
+.env.production

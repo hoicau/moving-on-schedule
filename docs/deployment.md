@@ -72,6 +72,15 @@ After deploying, check the browser Network panel to confirm that font requests u
 
 Reference: [Cloudflare Fonts](https://developers.cloudflare.com/speed/optimization/content/fonts/).
 
+## Footer filing information
+
+If the website needs to be deployed within Chinese mainland, copy [`.env.production.example`](`../.env.production.example`) to create a `.env.production` file before building. ICP and public security filings are configured independently; each entry is hidden when its `ID` is empty or contains only whitespace. Both are empty by default.
+
+- ICP filing: set `VITE_ICP_ID` to your ICP filing number and keep or update its `VITE_ICP_LINK`.
+- Public security filing: copy the filing text and complete `href` from the official HTML snippet into `VITE_PUBLIC_SECURITY_ID` and `VITE_PUBLIC_SECURITY_LINK`. Download the official icon to `public/` (for example, `public/beian-icon.png`) and set `VITE_PUBLIC_SECURITY_ICON` to `/beian-icon.png`.
+
+The component renders these fields using the site's styles. Desktop items use a gap, while mobile displays each entry on a separate line. The public security icon stays beside its filing text.
+
 ## After deployment
 
 - Verify the sample schedule, manual editing, file import/export, and persistence after reload.

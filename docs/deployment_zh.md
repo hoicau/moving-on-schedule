@@ -72,6 +72,15 @@ HTML 中的 stylesheet link 为英文和简体中文加载 Noto Sans SC，为繁
 
 参考：[Cloudflare Fonts](https://developers.cloudflare.com/speed/optimization/content/fonts/)。
 
+## 页脚备案信息
+
+如网站需要在中国大陆境内部署，构建前复制 [`.env.production.example`](../.env.production.example) 创建 `.env.production` 文件。ICP 与公安备案分别配置，各项 `ID` 为空或仅包含空格时隐藏，默认均为空。
+
+- ICP 备案：在 `VITE_ICP_ID` 中填写 ICP 备案号，并保留或更新对应的 `VITE_ICP_LINK`。
+- 公安备案：从官方 HTML 代码中复制备案文字和完整的 `href`，分别填入 `VITE_PUBLIC_SECURITY_ID` 和 `VITE_PUBLIC_SECURITY_LINK`。将下载的官方图标放进 `public/`，例如 `public/beian-icon.png`，然后将 `VITE_PUBLIC_SECURITY_ICON` 设为 `/beian-icon.png`。
+
+组件使用站点样式渲染这些字段。桌面端通过 gap 分隔各项，移动端每项独立一行，公安备案图标与备案文字保持同行。
+
 ## 上线后
 
 - 检查示例课表、手动编辑、文件导入导出，以及刷新后的数据保留。
