@@ -64,12 +64,12 @@ References: [Vite on Vercel](https://vercel.com/docs/frameworks/frontend/vite), 
 
 ## Footer filing information
 
-Edit [`src/filing-config.ts`](../src/filing-config.ts) before building. ICP and public security filings are configured independently; each entry is hidden when its `text` is empty or contains only whitespace. Both are empty by default.
+If the website needs to be deployed within Chinese mainland, copy [`.env.production.example`](`../.env.production.example`) to create a `.env.production` file before building. ICP and public security filings are configured independently; each entry is hidden when its `ID` is empty or contains only whitespace. Both are empty by default.
 
-- `icp`: set `text` to your ICP filing number and keep or update its `link`.
-- `publicSecurity`: copy the filing text and complete `href` from the official HTML snippet into `text` and `link`. Download the official icon to `public/` (for example, `public/beian-icon.png`) and set `icon` to `/beian-icon.png`.
+- ICP filing: set `VITE_ICP_ID` to your ICP filing number and keep or update its `VITE_ICP_LINK`.
+- Public security filing: copy the filing text and complete `href` from the official HTML snippet into `VITE_PUBLIC_SECURITY_ID` and `VITE_PUBLIC_SECURITY_LINK`. Download the official icon to `public/` (for example, `public/beian-icon.png`) and set `VITE_PUBLIC_SECURITY_ICON` to `/beian-icon.png`.
 
-The component renders these fields using the site's styles. Desktop items use a gap, while mobile displays each entry on a separate line. The public security icon stays beside its filing text. If migrating an existing deployment, move values from the former `src/icp-config.ts` into `filingConfig.icp`.
+The component renders these fields using the site's styles. Desktop items use a gap, while mobile displays each entry on a separate line. The public security icon stays beside its filing text.
 
 ## After deployment
 

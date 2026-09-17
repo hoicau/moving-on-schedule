@@ -1,12 +1,15 @@
 import { buildInfo } from './buildInfo';
 import { useI18n } from './LocaleProvider';
-import { filingConfig } from './filing-config';
 
 export function Footer() {
   const { t, date } = useI18n();
-  const icpText = filingConfig.icp.text.trim();
-  const publicSecurityText = filingConfig.publicSecurity.text.trim();
-  const publicSecurityIcon = filingConfig.publicSecurity.icon.trim();
+
+  const icpId = import.meta.env.VITE_ICP_ID?.trim();
+  const icpLink = import.meta.env.VITE_ICP_LINK?.trim();
+  const publicSecurityId = import.meta.env.VITE_PUBLIC_SECURITY_ID?.trim();
+  const publicSecurityLink = import.meta.env.VITE_PUBLIC_SECURITY_LINK?.trim();
+  const publicSecurityIcon = import.meta.env.VITE_PUBLIC_SECURITY_ICON?.trim();
+
   const version = buildInfo.version.replace(/^(\d+\.\d+)\.0$/, '$1');
   const commit = buildInfo.commit;
   const builtAt = date(new Date(buildInfo.builtAt), {
@@ -44,27 +47,27 @@ export function Footer() {
           </>
         )}
       </span>
-      {icpText && (
+      {icpId && (
         <a
           className="app-filing"
-          href={filingConfig.icp.link}
+          href={icpLink}
           target="_blank"
           rel="noopener noreferrer"
         >
-          {icpText}
+          {icpId}
         </a>
       )}
-      {publicSecurityText && (
+      {publicSecurityId && (
         <a
           className="app-filing"
-          href={filingConfig.publicSecurity.link}
+          href={publicSecurityLink}
           target="_blank"
           rel="noopener noreferrer"
         >
           {publicSecurityIcon && (
             <img src={publicSecurityIcon} alt="" width="16" height="16" />
           )}
-          <span>{publicSecurityText}</span>
+          <span>{publicSecurityId}</span>
         </a>
       )}
     </footer>

@@ -64,12 +64,12 @@ Pages 直接使用 `npm run build` 和 `dist`；Workers 配置用于按钮及 Wo
 
 ## 页脚备案信息
 
-构建前编辑 [`src/filing-config.ts`](../src/filing-config.ts)。ICP 与公安备案分别配置，各项 `text` 为空或仅包含空格时隐藏，默认均为空。
+如网站需要在中国大陆境内部署，构建前复制 [`.env.production.example`](../.env.production.example) 创建 `.env.production` 文件。ICP 与公安备案分别配置，各项 `ID` 为空或仅包含空格时隐藏，默认均为空。
 
-- `icp`：在 `text` 中填写 ICP 备案号，并保留或更新对应的 `link`。
-- `publicSecurity`：从官方 HTML 代码中复制备案文字和完整的 `href`，分别填入 `text` 和 `link`。将下载的官方图标放进 `public/`，例如 `public/beian-icon.png`，然后将 `icon` 设为 `/beian-icon.png`。
+- ICP 备案：在 `VITE_ICP_ID` 中填写 ICP 备案号，并保留或更新对应的 `VITE_ICP_LINK`。
+- 公安备案：从官方 HTML 代码中复制备案文字和完整的 `href`，分别填入 `VITE_PUBLIC_SECURITY_ID` 和 `VITE_PUBLIC_SECURITY_LINK`。将下载的官方图标放进 `public/`，例如 `public/beian-icon.png`，然后将 `VITE_PUBLIC_SECURITY_ICON` 设为 `/beian-icon.png`。
 
-组件使用站点样式渲染这些字段。桌面端通过 gap 分隔各项，移动端每项独立一行，公安备案图标与备案文字保持同行。已有部署升级时，请将原 `src/icp-config.ts` 中的配置迁移到 `filingConfig.icp`。
+组件使用站点样式渲染这些字段。桌面端通过 gap 分隔各项，移动端每项独立一行，公安备案图标与备案文字保持同行。
 
 ## 上线后
 
