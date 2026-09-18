@@ -946,84 +946,138 @@ function SettingsModal({
       className="settings-modal"
       onClose={onClose}
     >
-      <form onSubmit={submit} className="course-form" noValidate>
-        <label>
-          {t('ui.semesterName')}
-          <input
-            required
-            maxLength={60}
-            value={draft.semester}
-            onChange={(e) => setDraft({ ...draft, semester: e.target.value })}
-          />
-        </label>
-        <div className="form-grid semester-settings">
-          <label htmlFor="semester-first-day">{t('settings.firstDay')}</label>
-          <label htmlFor="semester-total-weeks">
-            {t('ui.semesterLengthWeeks')}
-          </label>
+      <form onSubmit={submit} className="course-form settings-form" noValidate>
+        <div className="settings-body">
+          <div className="semester-settings">
+            <label>
+              {t('ui.semesterName')}
+              <input
+                required
+                maxLength={60}
+                value={draft.semester}
+                onChange={(e) =>
+                  setDraft({ ...draft, semester: e.target.value })
+                }
+              />
+            </label>
+            <label>
+              {t('settings.firstDay')}
+              <input
+                aria-describedby="semester-first-week-help"
+                type="date"
+                required
+                value={draft.startDate}
+                onChange={(e) =>
+                  setDraft({ ...draft, startDate: e.target.value })
+                }
+              />
+            </label>
+            <label>
+              {t('ui.semesterLengthWeeks')}
+              <input
+                type="number"
+                min={1}
+                max={30}
+                required
+                value={draft.totalWeeks}
+                onChange={(e) =>
+                  setDraft({ ...draft, totalWeeks: Number(e.target.value) })
+                }
+              />
+            </label>
+            <label>
+              {t('settings.periodCount')}
+              <input
+                type="number"
+                min={1}
+                max={MAX_PERIODS}
+                step={1}
+                required
+                value={periodCount}
+                onChange={(e) => setPeriodCount(e.target.value)}
+              />
+            </label>
+          </div>
           <p className="settings-help" id="semester-first-week-help">
             {t('settings.firstWeekHelp')}
           </p>
-          <input
-            id="semester-first-day"
-            aria-describedby="semester-first-week-help"
-            type="date"
-            required
-            value={draft.startDate}
-            onChange={(e) => setDraft({ ...draft, startDate: e.target.value })}
-          />
-          <input
-            id="semester-total-weeks"
-            aria-describedby="semester-first-week-help"
-            type="number"
-            min={1}
-            max={30}
-            required
-            value={draft.totalWeeks}
-            onChange={(e) =>
-              setDraft({ ...draft, totalWeeks: Number(e.target.value) })
-            }
-          />
-        </div>
-        <label>
-          {t('settings.periodCount')}
-          <input
-            type="number"
-            min={1}
-            max={MAX_PERIODS}
-            step={1}
-            required
-            value={periodCount}
-            onChange={(e) => setPeriodCount(e.target.value)}
-          />
-        </label>
-        <div className="period-settings">
-          <strong>{t('ui.classTimes')}</strong>
-          <p className="settings-help">{t('settings.optionalTimes')}</p>
-          <div>
-            {visiblePeriods.map((p, i) => (
-              <div className="period-setting" key={i}>
-                <span>{t('ui.period', { 0: i + 1 })}</span>
-                <input
-                  aria-label={t('ui.periodStartTime', { 0: i + 1 })}
-                  type="text"
-                  maxLength={5}
-                  pattern="([01]?[0-9]|2[0-3]):[0-5][0-9]"
-                  value={p.start}
-                  onChange={(e) => setPeriodTime(i, 'start', e.target.value)}
-                />
-                <span>—</span>
-                <input
-                  aria-label={t('ui.periodEndTime', { 0: i + 1 })}
-                  type="text"
-                  maxLength={5}
-                  pattern="([01]?[0-9]|2[0-3]):[0-5][0-9]"
-                  value={p.end}
-                  onChange={(e) => setPeriodTime(i, 'end', e.target.value)}
-                />
-              </div>
-            ))}
-          </div>
+          <section
+            className="period-settings"
+            aria-labelledby="class-times-title"
+          >
+            <header className="period-settings-heading">
+              <h3 id="class-times-title">{t('ui.classTimes')}</h3>
+              <button
+                className="clear-period-times"
+                type="button"
+                disabled={!draft.periods.some((p) => p.start || p.end)}
+                onClick={() =>
+                  setDraft((current) => ({
+                    ...current,
+                    periods: current.periods.map(() => ({
+                      start: '',
+                      end: '',
+                    })),
+                  }))
+                }
+              >
+                <Trash2 size={14} aria-hidden="true" />
+                {t('settings.clearTimes')}
+              </button>
+            </header>
+            <p className="settings-help" id="class-times-help">
+              {t('settings.optionalTimes')}
+            </p>
+            <div className="period-settings-grid">
+              {[0, 1].map((group) => {
+                const split = Math.ceil(visiblePeriods.length / 2);
+                const offset = group * split;
+                const periods = visiblePeriods.slice(offset, offset + split);
+                if (!periods.length) return null;
+                return (
+                  <div className="period-settings-group" key={group}>
+                    <div className="period-settings-columns" aria-hidden="true">
+                      <span />
+                      <span>{t('settings.startTime')}</span>
+                      <span>{t('settings.endTime')}</span>
+                    </div>
+                    {periods.map((p, index) => {
+                      const i = offset + index;
+                      return (
+                        <div className="period-setting" key={i}>
+                          <span>{t('ui.period', { 0: i + 1 })}</span>
+                          <input
+                            aria-label={t('ui.periodStartTime', { 0: i + 1 })}
+                            aria-describedby="class-times-help"
+                            type="text"
+                            maxLength={5}
+                            placeholder="--:--"
+                            pattern="([01]?[0-9]|2[0-3]):[0-5][0-9]"
+                            value={p.start}
+                            onChange={(e) =>
+                              setPeriodTime(i, 'start', e.target.value)
+                            }
+                          />
+                          <input
+                            aria-label={t('ui.periodEndTime', { 0: i + 1 })}
+                            aria-describedby="class-times-help"
+                            type="text"
+                            maxLength={5}
+                            placeholder="--:--"
+                            pattern="([01]?[0-9]|2[0-3]):[0-5][0-9]"
+                            value={p.end}
+                            onChange={(e) =>
+                              setPeriodTime(i, 'end', e.target.value)
+                            }
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
         </div>
         {error && (
           <p role="alert" className="notice error">
@@ -1790,6 +1844,9 @@ export default function App() {
                     <div
                       className="timetable"
                       data-periods={settings.periods.length}
+                      data-has-times={settings.periods.some(
+                        (period) => period.start || period.end,
+                      )}
                       data-detail-lines={Math.max(
                         0,
                         ...filtered
@@ -1804,9 +1861,10 @@ export default function App() {
                               Number(
                                 showTeacher && Boolean(course.teacher.trim()),
                               ) +
-                              Number(
-                                showRemarks && Boolean(course.note.trim()),
-                              ),
+                              2 *
+                                Number(
+                                  showRemarks && Boolean(course.note.trim()),
+                                ),
                           ),
                       )}
                       style={{
@@ -1942,7 +2000,7 @@ export default function App() {
                             {clusters.flatMap((cluster) =>
                               cluster.map((course, index) => (
                                 <div
-                                  className={`course-position ${periodBreaks[course.start - 1] ? 'after-break' : ''}`}
+                                  className="course-position"
                                   key={course.id}
                                   style={{
                                     top: `calc(${course.start - 1} * var(--row-height) + var(--course-top-inset))`,

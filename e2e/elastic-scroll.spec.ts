@@ -232,17 +232,26 @@ test.describe('bounded mobile feedback', () => {
     await page
       .getByRole('button', { name: 'Timetable settings', exact: true })
       .click();
-    const modal = page.locator('.modal');
-    await modal.evaluate((el) => {
+    await page
+      .locator('.modal')
+      .evaluate((el) =>
+        Promise.all(el.getAnimations().map((animation) => animation.finished)),
+      );
+    const body = page.locator('.settings-body');
+    await body.evaluate((el) => {
       el.scrollTop = 0;
     });
     const pageY = await page.evaluate(() => scrollY);
-    const modalBounds = (await modal.boundingBox())!;
-    const y = modalBounds.y + 40;
+    const heading = await page.locator('.modal-heading').boundingBox();
+    const actions = await page.locator('.modal-actions').boundingBox();
+    const bodyBounds = (await body.boundingBox())!;
+    const y = bodyBounds.y + 10;
     await moveTouch(client, 180, y, true);
     await moveTouch(client, 180, y + 250);
-    expect(await offset(page, '.modal', 'y')).toBeGreaterThan(0);
-    expect(await offset(page, '.modal', 'y')).toBeLessThanOrEqual(24);
+    expect(await offset(page, '.settings-body', 'y')).toBeGreaterThan(0);
+    expect(await offset(page, '.settings-body', 'y')).toBeLessThanOrEqual(24);
+    expect(await page.locator('.modal-heading').boundingBox()).toEqual(heading);
+    expect(await page.locator('.modal-actions').boundingBox()).toEqual(actions);
     expect(await page.evaluate(() => scrollY)).toBe(pageY);
     expect(await offset(page, 'main', 'y')).toBe(0);
     await endTouch(client);

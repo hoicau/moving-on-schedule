@@ -78,6 +78,9 @@ export const en = {
   'ui.timetableSettings': 'Timetable settings',
   'ui.semesterName': 'Semester name',
   'settings.periodCount': 'Periods per day',
+  'settings.clearTimes': 'Clear',
+  'settings.startTime': 'Start',
+  'settings.endTime': 'End',
   'settings.firstWeekHelp':
     'Weeks run Monday–Sunday. The first week may be partial; classes begin on the selected date.',
   'settings.periodsInUse':
@@ -166,7 +169,7 @@ export const en = {
   'backup.createdAt': 'Backed up',
   'backup.includes':
     'Includes semester settings, daily times, course colors and remarks, language, appearance, and display preferences.',
-  'backup.exportAll': 'Export all data (JSON)',
+  'backup.exportAll': 'Export JSON data',
   'backup.exported': 'All data exported to JSON.',
   'backup.unreadable':
     'The saved timetable could not be read. A complete backup cannot be exported.',
@@ -298,7 +301,7 @@ export const en = {
     'Overlaps with: {0}. Check the course weeks and times.',
   'settings.invalidTime': 'Enter a valid time or leave it blank.',
   'settings.optionalTimes':
-    'Optional, blank by default. Use 24-hour H:mm or HH:mm (e.g. 8:00 or 14:30). Fill in times to identify classes in progress.',
+    'Optional. Use 24-hour times, e.g. 8:00 or 14:30, to show classes in progress. Leave blank if unknown.',
   'time.notSet': 'Time not set',
   'time.periodsNotSet': '{0} (Time not set)',
   'time.incomplete': 'Time incomplete',
@@ -416,6 +419,9 @@ export const translations: Record<
     'ui.timetableSettings': '课表设置',
     'ui.semesterName': '学期名称',
     'settings.periodCount': '每日节数',
+    'settings.clearTimes': '清空',
+    'settings.startTime': '开始',
+    'settings.endTime': '结束',
     'settings.firstWeekHelp':
       '每周按周一至周日排列。首周可不满七天，课程从所选日期开始。',
     'settings.periodsInUse':
@@ -501,7 +507,7 @@ export const translations: Record<
     'backup.createdAt': '备份时间',
     'backup.includes':
       '包含学期设置、每日作息、课程颜色与备注，以及语言、外观和显示偏好。',
-    'backup.exportAll': '导出全部数据（JSON）',
+    'backup.exportAll': '导出 JSON 数据',
     'backup.exported': '全部数据已导出为 JSON。',
     'backup.unreadable': '无法读取已保存的课表，不能导出完整备份。',
     'ui.noMatchingCourses': '没有找到匹配的课程',
@@ -625,7 +631,7 @@ export const translations: Record<
     'course.conflictDetails': '与以下课程时间重叠：{0}。请核对周次和时间。',
     'settings.invalidTime': '请填写有效时间，或留空。',
     'settings.optionalTimes':
-      '默认留空，可选填。使用 24 小时制 H:mm 或 HH:mm（如 8:00 或 14:30）；填写后可判断正在进行的课程。',
+      '选填。24 小时制，如 8:00 或 14:30。填写后可识别进行中的课程，未知可留空。',
     'time.notSet': '时间未设置',
     'time.periodsNotSet': '{0}（时间未设置）',
     'time.incomplete': '时间未填完整',
@@ -736,6 +742,9 @@ export const translations: Record<
     'ui.timetableSettings': '課表設定',
     'ui.semesterName': '學期名稱',
     'settings.periodCount': '每日節數',
+    'settings.clearTimes': '清空',
+    'settings.startTime': '開始',
+    'settings.endTime': '結束',
     'settings.firstWeekHelp':
       '每週按週一至週日排列。首週可不滿七天，課程從所選日期開始。',
     'settings.periodsInUse':
@@ -821,7 +830,7 @@ export const translations: Record<
     'backup.createdAt': '備份時間',
     'backup.includes':
       '包含學期設定、每日作息、課程顏色與備註，以及語言、外觀和顯示偏好。',
-    'backup.exportAll': '匯出全部資料（JSON）',
+    'backup.exportAll': '匯出 JSON 資料',
     'backup.exported': '全部資料已匯出為 JSON。',
     'backup.unreadable': '無法讀取已儲存的課表，無法匯出完整備份。',
     'ui.noMatchingCourses': '找不到符合的課程',
@@ -945,7 +954,7 @@ export const translations: Record<
     'course.conflictDetails': '與以下課程時間重疊：{0}。請核對週次和時間。',
     'settings.invalidTime': '請填寫有效時間，或留空。',
     'settings.optionalTimes':
-      '預設留空，可選填。使用 24 小時制 H:mm 或 HH:mm（如 8:00 或 14:30）；填寫後可判斷正在進行的課程。',
+      '選填。24 小時制，如 8:00 或 14:30。填寫後可識別進行中的課程，未知可留空。',
     'time.notSet': '時間未設定',
     'time.periodsNotSet': '{0}（時間未設定）',
     'time.incomplete': '時間未填完整',

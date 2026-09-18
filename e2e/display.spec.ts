@@ -233,7 +233,8 @@ for (const [locale, teacherLabel, remarkLabel] of [
           );
           expect(card.teacherOnSeparateLine).toBe(true);
           expect(card.teacherWidth).toBeGreaterThan(8);
-          expect(card.remarkHeight).toBeLessThan(16);
+          expect(card.remarkHeight).toBeGreaterThan(20);
+          expect(card.remarkHeight).toBeLessThan(30);
         }
         expect(
           await page.evaluate(
@@ -283,7 +284,7 @@ test('single-period remarks use bounded row height and hidden weekend remarks do
     await timetable.evaluate((el) =>
       getComputedStyle(el).getPropertyValue('--row-height'),
     ),
-  ).toBe('92px');
+  ).toBe('108px');
   const card = timetable.locator('.course-card');
   const dimensions = await card.evaluate((el) => ({
     bounds: el.getBoundingClientRect().toJSON(),

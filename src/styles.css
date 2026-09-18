@@ -868,7 +868,11 @@ h1 {
   line-height: 1.1;
 }
 .break-top {
-  border-top: 3px solid #e9f0f5 !important;
+  border-top: 1px solid #e4ecf2;
+}
+.period-label:has(+ .break-top),
+.grid-lines > button:has(+ .break-top) {
+  border-bottom: 0;
 }
 .day-column {
   position: relative;
@@ -1715,44 +1719,6 @@ h1 {
   color: #577489;
   margin-left: auto;
 }
-.period-settings > strong {
-  display: block;
-  font-size: 12px;
-  color: #547287;
-  font-weight: 500;
-}
-.period-settings > p {
-  font-size: 10px;
-  color: #577489;
-  margin: 7px 0 14px;
-}
-.period-settings > div {
-  border: 1px solid #d3e0ea;
-  border-radius: 8px;
-  background: white;
-  padding: 8px 13px;
-}
-.period-setting {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 7px 0;
-}
-.period-setting > span:first-child {
-  width: 50px;
-  font-size: 10px;
-  color: #577589;
-}
-.period-setting > span {
-  color: #577589;
-}
-.period-setting input {
-  min-width: 0;
-  flex: 1;
-  padding: 6px 9px;
-  min-height: 33px;
-  font-size: 11px;
-}
 .help-content {
   display: flex;
   flex-direction: column;
@@ -2368,12 +2334,6 @@ h1 {
     flex-basis: 100%;
     padding-left: 24px;
     margin-top: 2px;
-  }
-  .period-setting {
-    gap: 8px;
-  }
-  .period-setting input {
-    font-size: 14px;
   }
   .course-list {
     padding: 0 10px;

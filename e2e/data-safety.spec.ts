@@ -34,7 +34,7 @@ async function exported(page: Page) {
   const downloading = page.waitForEvent('download');
   await page
     .getByRole('dialog')
-    .getByRole('button', { name: 'Export all data (JSON)', exact: true })
+    .getByRole('button', { name: 'Export JSON data', exact: true })
     .click();
   const download = await downloading;
   await page.keyboard.press('Escape');
@@ -144,7 +144,7 @@ test('quota failure reports the problem and exports unsaved preferences', async 
   const downloading = page.waitForEvent('download');
   await page
     .locator('.storage-notice')
-    .getByRole('button', { name: 'Export all data (JSON)', exact: true })
+    .getByRole('button', { name: 'Export JSON data', exact: true })
     .click();
   const download = await downloading;
   const backup = JSON.parse(await readFile((await download.path())!, 'utf8'));
@@ -173,7 +173,7 @@ test('denied storage remains usable without claiming a successful save', async (
   await expect(
     page
       .locator('.storage-notice')
-      .getByRole('button', { name: 'Export all data (JSON)', exact: true }),
+      .getByRole('button', { name: 'Export JSON data', exact: true }),
   ).toBeVisible();
 });
 

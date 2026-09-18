@@ -5,7 +5,7 @@ type Surface = { scroller: HTMLElement; content: HTMLElement; limit: number };
 type Pull = Surface & { axis: Axis; distance: number; edge: number };
 
 const SCROLL_AREAS =
-  '.sidebar, .modal, .timetable-scroll, .preview-table, .upcoming-entries, .mascot-card';
+  '.sidebar, .modal, .settings-body, .timetable-scroll, .preview-table, .upcoming-entries, .mascot-card';
 const RETURN_MS = 240;
 
 /** Touch-only boundary feedback, capped at 32px for the page and 24px locally. */
