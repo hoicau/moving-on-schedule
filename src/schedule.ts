@@ -178,6 +178,12 @@ export function courseOccursInWeek(
     localDate(dateAtWeek(settings, week, course.day)) >= settings.startDate
   );
 }
+export function normalizeClockInput(input: string): string {
+  const value = input.trim();
+  return /^(?:[01]?\d|2[0-3]):[0-5]\d$/.test(value)
+    ? value.padStart(5, '0')
+    : value;
+}
 export function parseCourseTiming(
   startInput: string,
   endInput: string,
@@ -185,8 +191,8 @@ export function parseCourseTiming(
   maxPeriods = DEFAULT_SETTINGS.periods.length,
 ): Required<CourseTiming> {
   const t = createTranslator(locale);
-  const start = startInput.trim(),
-    end = endInput.trim();
+  const start = normalizeClockInput(startInput),
+    end = normalizeClockInput(endInput);
   if (/^\d+$/.test(start) && /^\d+$/.test(end)) {
     const first = Number(start),
       last = Number(end);
@@ -194,12 +200,10 @@ export function parseCourseTiming(
       throw new Error(t('timing.periodRangeError', { 0: maxPeriods }));
     return { timing: 'period', start: first, end: last };
   }
-  const clock = /^(?:[01]?\d|2[0-3]):[0-5]\d$/;
+  const clock = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
   if (clock.test(start) && clock.test(end)) {
-    const first = start.padStart(5, '0'),
-      last = end.padStart(5, '0');
-    if (first >= last) throw new Error(t('timing.endAfterStart'));
-    return { timing: 'time', start: first, end: last };
+    if (start >= end) throw new Error(t('timing.endAfterStart'));
+    return { timing: 'time', start, end };
   }
   throw new Error(t('timing.invalidPair', { 0: maxPeriods }));
 }

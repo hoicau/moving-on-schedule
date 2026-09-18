@@ -260,56 +260,67 @@ test('two tabs cannot overwrite each other and confirmed reload adopts the saved
   );
 });
 
-test('display options and data management stay usable across mobile, locales, and themes', async ({
-  page,
-}) => {
+test.describe('display options and data management layout', () => {
+  // Layout assertions do not need to wait for sidebar and modal animations.
+  // Motion behavior is covered separately in elastic-scroll.spec.ts.
+  test.use({ reducedMotion: 'reduce' });
+
   for (const locale of ['en', 'zh-Hans', 'zh-Hant']) {
-    await page.goto('/');
-    await page.locator('.language-select').selectOption(locale);
     for (const theme of ['light', 'dark']) {
-      await page
-        .locator('.theme-switch button')
-        .nth(theme === 'light' ? 0 : 1)
-        .click();
-      for (const [width, height] of [
-        [1440, 900],
-        [393, 650],
-        [320, 568],
-        [844, 320],
-      ]) {
-        await page.setViewportSize({ width, height });
-        await page.evaluate(
-          () =>
-            new Promise<void>((resolve) =>
-              requestAnimationFrame(() =>
-                requestAnimationFrame(() => resolve()),
+      test(`${locale}, ${theme}: controls stay reachable at every viewport`, async ({
+        page,
+      }) => {
+        await page.goto('/');
+        await page.locator('.language-select').selectOption(locale);
+        await page
+          .locator('.theme-switch button')
+          .nth(theme === 'light' ? 0 : 1)
+          .click();
+        await page.evaluate(() => document.fonts.ready.then(() => undefined));
+
+        for (const [width, height] of [
+          [1440, 900],
+          [393, 650],
+          [320, 568],
+          [844, 320],
+        ]) {
+          await test.step(`${width}x${height}`, async () => {
+            await page.setViewportSize({ width, height });
+            await page.evaluate(
+              () =>
+                new Promise<void>((resolve) =>
+                  requestAnimationFrame(() =>
+                    requestAnimationFrame(() => resolve()),
+                  ),
+                ),
+            );
+            await menu(page);
+            const bounds = await page.locator('.display-menu').boundingBox();
+            expect(bounds!.x).toBeGreaterThanOrEqual(0);
+            expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(width);
+            expect(
+              await page.evaluate(
+                () => document.documentElement.scrollWidth <= innerWidth,
               ),
-            ),
-        );
-        await menu(page);
-        const bounds = await page.locator('.display-menu').boundingBox();
-        expect(bounds!.x).toBeGreaterThanOrEqual(0);
-        expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(width);
-        expect(
-          await page.evaluate(
-            () => document.documentElement.scrollWidth <= innerWidth,
-          ),
-        ).toBe(true);
-        await dataManagement(page);
-        await expect(page.locator('.sidebar')).not.toHaveClass(/open/);
-        for (const button of await page
-          .locator('.import-resource-actions button')
-          .all()) {
-          await button.scrollIntoViewIfNeeded();
-          await expect(button).toBeInViewport();
+            ).toBe(true);
+            await dataManagement(page);
+            await expect(page.locator('.sidebar')).not.toHaveClass(/open/);
+            const actions = page.locator('.import-resource-actions button');
+            await expect(actions).toHaveCount(4);
+            for (const button of await actions.all()) {
+              await button.scrollIntoViewIfNeeded();
+              await expect(button).toBeInViewport();
+            }
+            expect(
+              await page
+                .getByRole('dialog')
+                .evaluate((el) => el.scrollWidth <= el.clientWidth),
+            ).toBe(true);
+            await page.keyboard.press('Escape');
+            await expect(page.getByRole('dialog')).toHaveCount(0);
+          });
         }
-        expect(
-          await page
-            .getByRole('dialog')
-            .evaluate((el) => el.scrollWidth <= el.clientWidth),
-        ).toBe(true);
-        await page.keyboard.press('Escape');
-      }
+      });
     }
   }
 });

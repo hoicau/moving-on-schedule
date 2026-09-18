@@ -79,7 +79,7 @@ export const en = {
   'ui.semesterName': 'Semester name',
   'settings.periodCount': 'Periods per day',
   'settings.firstWeekHelp':
-    'Weeks run Monday–Sunday. The first week may be partial; classes begin on the date above.',
+    'Weeks run Monday–Sunday. The first week may be partial; classes begin on the selected date.',
   'settings.periodsInUse':
     'Some courses end after period {0}. Adjust those courses before reducing the daily period count.',
   'settings.firstDay': 'First day of semester',
@@ -182,7 +182,7 @@ export const en = {
   'ui.createBlankTimetable': 'Create blank timetable',
   'help.settingsTitle': 'Set up your timetable',
   'ui.inTimetableSettingsSetTheFirstMondaySemesterLength':
-    'Open Timetable settings at the bottom of the sidebar. Choose the first day of semester, its length, and the number of daily periods (1–30). Weeks run Monday–Sunday; the first week may be partial, with no classes before the start date. Daily times are optional and use 24-hour HH:mm.',
+    'Open Timetable settings at the bottom of the sidebar. Choose the first day of semester, its length, and the number of daily periods (1–30). Weeks run Monday–Sunday; the first week may be partial, with no classes before the start date. Daily times are optional and use 24-hour H:mm or HH:mm.',
   'ui.addAndManageCourses': 'Add and manage courses',
   'help.importTitle': 'Import Excel or CSV',
   'ui.downloadTheTemplateAndUseOneMeetingPerRow':
@@ -298,7 +298,7 @@ export const en = {
     'Overlaps with: {0}. Check the course weeks and times.',
   'settings.invalidTime': 'Enter a valid time or leave it blank.',
   'settings.optionalTimes':
-    'Optional, blank by default. Use 24-hour HH:mm (e.g. 08:00 or 14:30). Fill in times to identify classes in progress.',
+    'Optional, blank by default. Use 24-hour H:mm or HH:mm (e.g. 8:00 or 14:30). Fill in times to identify classes in progress.',
   'time.notSet': 'Time not set',
   'time.periodsNotSet': '{0} (Time not set)',
   'time.incomplete': 'Time incomplete',
@@ -318,7 +318,7 @@ export const en = {
   'timing.help':
     'Use integers 1–{0} for periods, or 24-hour times such as 08:00. Both fields must use the same format.',
   'timing.invalidPair':
-    'Use two period numbers (1–{0}) or two 24-hour times (HH:mm). Do not mix formats.',
+    'Use two period numbers (1–{0}) or two 24-hour times (H:mm or HH:mm). Do not mix formats.',
   'timing.endAfterStart':
     'The end time must be later than the start time on the same day.',
   'timing.clockCourses': 'By time',
@@ -516,7 +516,7 @@ export const translations: Record<
     'ui.createBlankTimetable': '创建空白课表',
     'help.settingsTitle': '设置课表',
     'ui.inTimetableSettingsSetTheFirstMondaySemesterLength':
-      '从侧栏底部打开「课表设置」，填写本学期第一天、学期长度和每日节数（1–30）。每周按周一至周日排列，首周可不满七天，开学日前不显示课程。每日作息选填，使用 24 小时制 HH:mm。',
+      '从侧栏底部打开「课表设置」，填写本学期第一天、学期长度和每日节数（1–30）。每周按周一至周日排列，首周可不满七天，开学日前不显示课程。每日作息选填，使用 24 小时制 H:mm 或 HH:mm。',
     'ui.addAndManageCourses': '添加与管理课程',
     'help.importTitle': '导入 Excel 或 CSV',
     'ui.downloadTheTemplateAndUseOneMeetingPerRow':
@@ -625,7 +625,7 @@ export const translations: Record<
     'course.conflictDetails': '与以下课程时间重叠：{0}。请核对周次和时间。',
     'settings.invalidTime': '请填写有效时间，或留空。',
     'settings.optionalTimes':
-      '默认留空，可选填。使用 24 小时制 HH:mm（如 08:00 或 14:30）；填写后可判断正在进行的课程。',
+      '默认留空，可选填。使用 24 小时制 H:mm 或 HH:mm（如 8:00 或 14:30）；填写后可判断正在进行的课程。',
     'time.notSet': '时间未设置',
     'time.periodsNotSet': '{0}（时间未设置）',
     'time.incomplete': '时间未填完整',
@@ -644,7 +644,7 @@ export const translations: Record<
     'timing.help':
       '整数 1–{0} 表示节次，08:00 等 24 小时制时间表示实际时间。两端须使用相同格式。',
     'timing.invalidPair':
-      '请填写两个节次（1–{0}），或两个 24 小时制时间（HH:mm），不要混用格式。',
+      '请填写两个节次（1–{0}），或两个 24 小时制时间（H:mm 或 HH:mm），不要混用格式。',
     'timing.endAfterStart': '结束时间须晚于同一天的开始时间。',
     'timing.clockCourses': '按时间',
     'timing.unknownOverlap':
@@ -836,7 +836,7 @@ export const translations: Record<
     'ui.createBlankTimetable': '建立空白課表',
     'help.settingsTitle': '設定課表',
     'ui.inTimetableSettingsSetTheFirstMondaySemesterLength':
-      '從側欄底部開啟「課表設定」，填寫本學期第一天、學期長度和每日節數（1–30）。每週按週一至週日排列，首週可不滿七天，開學日前不顯示課程。每日作息選填，使用 24 小時制 HH:mm。',
+      '從側欄底部開啟「課表設定」，填寫本學期第一天、學期長度和每日節數（1–30）。每週按週一至週日排列，首週可不滿七天，開學日前不顯示課程。每日作息選填，使用 24 小時制 H:mm 或 HH:mm。',
     'ui.addAndManageCourses': '新增與管理課程',
     'help.importTitle': '匯入 Excel 或 CSV',
     'ui.downloadTheTemplateAndUseOneMeetingPerRow':
@@ -945,7 +945,7 @@ export const translations: Record<
     'course.conflictDetails': '與以下課程時間重疊：{0}。請核對週次和時間。',
     'settings.invalidTime': '請填寫有效時間，或留空。',
     'settings.optionalTimes':
-      '預設留空，可選填。使用 24 小時制 HH:mm（如 08:00 或 14:30）；填寫後可判斷正在進行的課程。',
+      '預設留空，可選填。使用 24 小時制 H:mm 或 HH:mm（如 8:00 或 14:30）；填寫後可判斷正在進行的課程。',
     'time.notSet': '時間未設定',
     'time.periodsNotSet': '{0}（時間未設定）',
     'time.incomplete': '時間未填完整',
@@ -964,7 +964,7 @@ export const translations: Record<
     'timing.help':
       '整數 1–{0} 表示節次，08:00 等 24 小時制時間表示實際時間。兩端須使用相同格式。',
     'timing.invalidPair':
-      '請填寫兩個節次（1–{0}），或兩個 24 小時制時間（HH:mm），不要混用格式。',
+      '請填寫兩個節次（1–{0}），或兩個 24 小時制時間（H:mm 或 HH:mm），不要混用格式。',
     'timing.endAfterStart': '結束時間須晚於同一天的開始時間。',
     'timing.clockCourses': '按時間',
     'timing.unknownOverlap':

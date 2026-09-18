@@ -670,6 +670,17 @@ html[lang='en'] .course-card-top {
   line-height: 1.6;
   margin-top: -6px;
 }
+.settings-modal .settings-help {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.6;
+}
+.semester-settings {
+  row-gap: 8px;
+}
+.semester-settings > .settings-help {
+  grid-column: 1 / -1;
+}
 .clock-row-label {
   background: var(--surface-soft);
   border-right: 1px solid var(--border);

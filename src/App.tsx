@@ -66,6 +66,7 @@ import {
   conflicts,
   unresolvedConflicts,
   parseCourseTiming,
+  normalizeClockInput,
   courseClock,
   compareCourses,
   isPeriodCourse,
@@ -916,7 +917,13 @@ function SettingsModal({
     try {
       if (!validCount)
         throw new Error(t('settings.invalidPeriodCount', { 0: MAX_PERIODS }));
-      const next = { ...draft, periods: visiblePeriods };
+      const next = {
+        ...draft,
+        periods: visiblePeriods.map((period) => ({
+          start: normalizeClockInput(period.start),
+          end: normalizeClockInput(period.end),
+        })),
+      };
       validateSettings(next, locale);
       if (courses.some((c) => isPeriodCourse(c) && c.end > count))
         throw new Error(t('settings.periodsInUse', { 0: count }));
@@ -949,33 +956,35 @@ function SettingsModal({
             onChange={(e) => setDraft({ ...draft, semester: e.target.value })}
           />
         </label>
-        <div className="form-grid">
-          <label>
-            {t('settings.firstDay')}
-            <input
-              type="date"
-              required
-              value={draft.startDate}
-              onChange={(e) =>
-                setDraft({ ...draft, startDate: e.target.value })
-              }
-            />
-          </label>
-          <label>
+        <div className="form-grid semester-settings">
+          <label htmlFor="semester-first-day">{t('settings.firstDay')}</label>
+          <label htmlFor="semester-total-weeks">
             {t('ui.semesterLengthWeeks')}
-            <input
-              type="number"
-              min={1}
-              max={30}
-              required
-              value={draft.totalWeeks}
-              onChange={(e) =>
-                setDraft({ ...draft, totalWeeks: Number(e.target.value) })
-              }
-            />
           </label>
+          <p className="settings-help" id="semester-first-week-help">
+            {t('settings.firstWeekHelp')}
+          </p>
+          <input
+            id="semester-first-day"
+            aria-describedby="semester-first-week-help"
+            type="date"
+            required
+            value={draft.startDate}
+            onChange={(e) => setDraft({ ...draft, startDate: e.target.value })}
+          />
+          <input
+            id="semester-total-weeks"
+            aria-describedby="semester-first-week-help"
+            type="number"
+            min={1}
+            max={30}
+            required
+            value={draft.totalWeeks}
+            onChange={(e) =>
+              setDraft({ ...draft, totalWeeks: Number(e.target.value) })
+            }
+          />
         </div>
-        <p className="timing-help">{t('settings.firstWeekHelp')}</p>
         <label>
           {t('settings.periodCount')}
           <input
@@ -990,7 +999,7 @@ function SettingsModal({
         </label>
         <div className="period-settings">
           <strong>{t('ui.classTimes')}</strong>
-          <p>{t('settings.optionalTimes')}</p>
+          <p className="settings-help">{t('settings.optionalTimes')}</p>
           <div>
             {visiblePeriods.map((p, i) => (
               <div className="period-setting" key={i}>
@@ -998,9 +1007,8 @@ function SettingsModal({
                 <input
                   aria-label={t('ui.periodStartTime', { 0: i + 1 })}
                   type="text"
-                  placeholder="HH:mm"
                   maxLength={5}
-                  pattern="([01][0-9]|2[0-3]):[0-5][0-9]"
+                  pattern="([01]?[0-9]|2[0-3]):[0-5][0-9]"
                   value={p.start}
                   onChange={(e) => setPeriodTime(i, 'start', e.target.value)}
                 />
@@ -1008,9 +1016,8 @@ function SettingsModal({
                 <input
                   aria-label={t('ui.periodEndTime', { 0: i + 1 })}
                   type="text"
-                  placeholder="HH:mm"
                   maxLength={5}
-                  pattern="([01][0-9]|2[0-3]):[0-5][0-9]"
+                  pattern="([01]?[0-9]|2[0-3]):[0-5][0-9]"
                   value={p.end}
                   onChange={(e) => setPeriodTime(i, 'end', e.target.value)}
                 />
