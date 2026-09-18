@@ -8,3 +8,4 @@ test-results/
 /.dev.vars.*
 playwright-report/
 .env.production
+/utils
