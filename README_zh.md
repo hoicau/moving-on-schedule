@@ -43,6 +43,6 @@ npm run dev
 
 ## 许可证
 
-本项目采用 [MIT License](LICENSE)。Copyright (c) 2026 hoicau。
+本项目采用 [Mozilla Public License 2.0](LICENSE)。Copyright (c) 2026 hoicau。
 
 GitHub 图标来自 [Octicons](https://github.com/primer/octicons)，保留其 [MIT 许可与版权声明](docs/octicons-LICENSE.txt)。第三方依赖遵循各自的许可证。

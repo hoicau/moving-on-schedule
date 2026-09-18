@@ -1,7 +1,7 @@
 {
   "name": "moving-on-schedule",
   "version": "0.1.0",
-  "license": "MIT",
+  "license": "MPL-2.0",
   "description": "A calm, local-first timetable with Excel import and manual course editing.",
   "scripts": {
     "dev": "vite",

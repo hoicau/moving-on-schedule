@@ -42,6 +42,6 @@ Course data stays in the current browser. There are no accounts or cloud sync; e
 
 ## License
 
-Licensed under the [MIT License](LICENSE). Copyright (c) 2026 hoicau.
+Licensed under the [Mozilla Public License 2.0](LICENSE). Copyright (c) 2026 hoicau.
 
 The GitHub icon comes from [Octicons](https://github.com/primer/octicons) and retains its [MIT license and copyright notice](docs/octicons-LICENSE.txt). Third-party dependencies retain their respective licenses.
