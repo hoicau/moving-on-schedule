@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createBackup, backupUserData } from './backup';
 import { readBackup, verifyBackup } from './backupImport';
-import { defaultUserData } from './userData';
+import { defaultUserData, validateUserData } from './userData';
 import { checksum } from './integrity';
 import { LOCALES } from './i18n';
 import { COLORS } from './schedule';
@@ -30,6 +30,7 @@ test('JSON round-trip preserves every course field, both timing types, settings,
         weeks: [1, 3, 7],
         name: '原文 <script> $&',
         note: '第一行\nSecond line, "quoted"',
+        ...(index % 3 === 0 ? {} : { hidden: index % 3 === 1 }),
         ...(index % 2
           ? { timing: 'time' as const, start: '10:00', end: '11:30' }
           : { timing: 'period' as const, start: 1, end: 2 }),
@@ -44,11 +45,28 @@ test('JSON round-trip preserves every course field, both timing types, settings,
         await readBackup(new File([JSON.stringify(backup)], 'backup.json')),
       );
       assert.deepEqual(restored, original);
+      validateUserData(restored);
       assert.deepEqual(data, original);
       backup.schedule.courses[0].weeks.push(9);
       backup.preferences.display.showRemarks = false;
       assert.deepEqual(data, original);
     }
+});
+
+test('invalid course visibility is rejected by storage and JSON backup validation', async () => {
+  const data = defaultUserData('en');
+  const original = await createBackup(data.schedule, data.preferences);
+  for (const hidden of [null, 'false', 0, []]) {
+    const changed = structuredClone(data);
+    Object.assign(changed.schedule.courses[0], { hidden });
+    assert.throws(() => validateUserData(changed), /Invalid course details/);
+    await assert.rejects(createBackup(changed.schedule, changed.preferences));
+    const backup = structuredClone(original);
+    Object.assign(backup.schedule.courses[0], { hidden });
+    const { integrity: _integrity, ...content } = backup;
+    backup.integrity = await checksum(content);
+    await assert.rejects(verifyBackup(backup), /backup.invalid/);
+  }
 });
 
 test('demo and empty backups retain their identity, raw text, blank times, and defaults', async () => {

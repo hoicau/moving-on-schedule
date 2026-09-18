@@ -17,6 +17,43 @@ import { parseDisplayPreferences } from './displayPreferences';
 const settings = { ...TIMED_SETTINGS, startDate: '2026-09-07', totalWeeks: 3 };
 const monday = { ...SAMPLE_COURSES[0], weeks: [1, 3] };
 
+test('hidden meetings are excluded from previews and cannot affect visible next-class badges', () => {
+  const hidden = { ...monday, hidden: true };
+  const visible = {
+    ...monday,
+    id: 'visible-same-name',
+    timing: 'time' as const,
+    start: '10:00',
+    end: '11:00',
+  };
+  for (const periods of [settings.periods, DEFAULT_SETTINGS.periods]) {
+    const timetable = { ...settings, periods };
+    for (const time of ['07:00', '08:30', '10:30', '12:00']) {
+      const now = new Date(`2026-09-07T${time}:00`);
+      assert.deepEqual(
+        recentCourses([hidden, visible], timetable, now),
+        recentCourses([visible], timetable, now),
+      );
+      assert.deepEqual(
+        upcomingCourses([hidden, visible], timetable, now),
+        upcomingCourses([visible], timetable, now),
+      );
+      assert.deepEqual(recentCourses([hidden], timetable, now), {
+        current: [],
+        untimed: [],
+        next: [],
+      });
+      assert.deepEqual(upcomingCourses([hidden], timetable, now), []);
+    }
+  }
+  const restored = { ...hidden, hidden: false };
+  assert.equal(
+    upcomingCourses([restored], settings, new Date('2026-09-07T07:00:00'))[0]
+      .course.id,
+    monday.id,
+  );
+});
+
 test('timeline previews multiple days in clock order and skips finished occurrences', () => {
   const afternoon = { ...monday, id: 'afternoon', start: 5, end: 6 };
   const tuesday = { ...monday, id: 'tuesday', day: 2, start: 3, end: 4 };

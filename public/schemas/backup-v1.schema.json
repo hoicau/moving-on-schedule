@@ -140,6 +140,9 @@
         "note": {
           "type": "string"
         },
+        "hidden": {
+          "type": "boolean"
+        },
         "timing": {
           "enum": ["period", "time"]
         },

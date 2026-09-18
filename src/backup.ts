@@ -43,6 +43,7 @@ export async function createBackup(
         weeks: [...course.weeks],
         color: course.color,
         note: course.note,
+        ...(course.hidden !== undefined ? { hidden: course.hidden } : {}),
         ...(course.timing === 'time'
           ? { timing: 'time' as const, start: course.start, end: course.end }
           : {

@@ -494,6 +494,15 @@ h1 {
   background: var(--accent-hover);
   box-shadow: none;
 }
+.button.danger {
+  background: #f8d8d6;
+  color: #8e353b;
+  border: 0;
+  box-shadow: none;
+}
+.button.danger:hover:not(:disabled) {
+  background: #f2c5c3;
+}
 .button.secondary {
   background: #fff;
   border: 0;

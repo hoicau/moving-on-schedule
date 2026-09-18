@@ -345,6 +345,13 @@
 [data-theme='dark'] .danger {
   color: #ffb7af;
 }
+[data-theme='dark'] .button.danger {
+  background: #f2b8b5;
+  color: #6d252e;
+}
+[data-theme='dark'] .button.danger:hover:not(:disabled) {
+  background: #faccca;
+}
 [data-theme='dark'] .notice.error {
   background: #432d2e;
   color: #ffbfb5;

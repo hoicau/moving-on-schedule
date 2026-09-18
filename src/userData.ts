@@ -77,6 +77,7 @@ export function validateUserData(data: UserData): void {
       'weeks',
       'color',
       'note',
+      'hidden',
       'timing',
       'start',
       'end',

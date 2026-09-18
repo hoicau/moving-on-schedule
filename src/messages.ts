@@ -290,6 +290,10 @@ export const en = {
   'footer.viewCommit': 'View commit {0}',
 
   'course.time': 'Time',
+  'course.showOnTimetable': 'Show on timetable',
+  'course.visibilityHelp':
+    'Applies to every week of this meeting in the timetable and Coming up. Restore hidden meetings from All courses.',
+  'course.hidden': 'Hidden',
   'course.conflictDetails':
     'Overlaps with: {0}. Check the course weeks and times.',
   'settings.invalidTime': 'Enter a valid time or leave it blank.',
@@ -614,6 +618,10 @@ export const translations: Record<
     'footer.viewCommit': '查看 commit {0}',
 
     'course.time': '时间',
+    'course.showOnTimetable': '在课表中显示',
+    'course.visibilityHelp':
+      '适用于这条安排所有周次的课表和「即将开始」。隐藏后可在「全部课程」中恢复。',
+    'course.hidden': '已隐藏',
     'course.conflictDetails': '与以下课程时间重叠：{0}。请核对周次和时间。',
     'settings.invalidTime': '请填写有效时间，或留空。',
     'settings.optionalTimes':
@@ -930,6 +938,10 @@ export const translations: Record<
     'footer.viewCommit': '查看 commit {0}',
 
     'course.time': '時間',
+    'course.showOnTimetable': '在課表中顯示',
+    'course.visibilityHelp':
+      '適用於這條安排所有週次的課表與「即將開始」。隱藏後可在「全部課程」中恢復。',
+    'course.hidden': '已隱藏',
     'course.conflictDetails': '與以下課程時間重疊：{0}。請核對週次和時間。',
     'settings.invalidTime': '請填寫有效時間，或留空。',
     'settings.optionalTimes':

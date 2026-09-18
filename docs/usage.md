@@ -19,6 +19,8 @@ Locales use `en`, `zh-Hans`, and `zh-Hant`. Previously saved `zh-CN` / `zh-TW` p
 
 ## Home display
 
+Each meeting has a **Show on timetable** switch in its details and add/edit form. Turning it off hides that meeting in every teaching week and from **Coming up**. Other meetings with the same name are independent. Hidden meetings remain in **All courses**, marked **Hidden**; open one to turn it back on. The choice is saved locally and included in JSON backups. Conflict checks still include hidden meetings. Excel/CSV exports include all meetings but omit visibility; imported rows start visible.
+
 Open **Display** above the timetable to toggle **Weekends**, **Show teacher**, and **Show remarks**. These choices are remembered in this browser. Teachers are hidden in timetable cards by default and appear on a separate line when enabled. Remarks are hidden by default; enabling them shows nonempty remarks in course cards, the list, and Coming up. Long remarks are abbreviated on the home page and always available in full in course details. Hiding remarks never removes their contents.
 
 If weekends are hidden while the viewed week has weekend classes, a visible notice lets you reveal them. On desktop, the timetable sets the content height; the right-hand cards fit that height, with a shared bottom edge and space below the content. Upcoming entries scroll when needed. The **Source code** link below **Getting started** in the sidebar opens the GitHub repository in a new tab. On mobile, open the navigation menu and scroll to the bottom of the sidebar to reach it.

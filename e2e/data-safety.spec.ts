@@ -66,7 +66,25 @@ test('complete JSON export, preview, restore, preferences and reload', async ({
       display: { showRemarks: true, showTeacher: true },
     },
   });
+  await page.locator('.display-options summary').click();
+  await page.locator('.timetable .course-card').first().click();
+  await page
+    .getByRole('switch', { name: 'Show on timetable', exact: true })
+    .click();
+  await page.keyboard.press('Escape');
+  await expectSaved(page, {
+    schedule: {
+      courses: expect.arrayContaining([
+        expect.objectContaining({ hidden: true }),
+      ]),
+    },
+  });
   const backup = await exported(page);
+  expect(
+    backup.schedule.courses.filter(
+      (course: { hidden?: boolean }) => course.hidden,
+    ),
+  ).toHaveLength(1);
   expect(backup.preferences.theme).toBe('dark');
   expect(backup.preferences.display.showRemarks).toBe(true);
   expect(backup.preferences.display.showTeacher).toBe(true);

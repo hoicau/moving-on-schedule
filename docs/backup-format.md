@@ -21,6 +21,8 @@ The machine-readable contract is [backup-v1.schema.json](../public/schemas/backu
 
 `preferences.display.showTeacher` is optional and defaults to hidden when absent, so existing v1 backups remain importable. New exports preserve this choice when it has been set.
 
+Course `hidden` is an optional boolean. Missing or `false` means visible; `true` hides that meeting from every teaching week and from Coming up. All courses and conflict checks still include it. Existing v1 backups remain importable, and new exports preserve the field when set. Older app versions may reject backups containing this field and should be updated before restoring them.
+
 Course `timing` is explicitly `period` or `time`; legacy period courses gain `timing: "period"` on export. Periods use inclusive integer endpoints, 1–30; clock times use zero-padded 24-hour `HH:mm` and must end later the same day. Days are 1=Monday through 7=Sunday. Weeks must fit the semester and period references must fit the daily period list. Empty or partially filled daily times are retained. Course IDs must be unique. Overlapping courses remain valid.
 
 The schema checks structure and primitive limits. Application validation also checks real calendar dates, chronological daily times, course start/end ordering, unique IDs and references to configured weeks/periods. A checksum cannot make an invalid schedule valid. Unknown fields and unsupported versions are rejected by the JSON importer, preventing silent loss of data from newer formats.

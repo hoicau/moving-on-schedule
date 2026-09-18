@@ -46,7 +46,8 @@ export function recentCourses(
     week++
   ) {
     for (const course of courses) {
-      if (!courseOccursInWeek(course, settings, week)) continue;
+      if (course.hidden || !courseOccursInWeek(course, settings, week))
+        continue;
       const entry = courseOccurrence(course, settings, week);
       if (occurrenceIsPast(entry, now)) continue;
       const today = localDate(entry.date) === localDate(now);
@@ -93,7 +94,8 @@ export function upcomingCourses(
     week++
   ) {
     for (const course of courses) {
-      if (!courseOccursInWeek(course, settings, week)) continue;
+      if (course.hidden || !courseOccursInWeek(course, settings, week))
+        continue;
       const entry = courseOccurrence(course, settings, week);
       if (!occurrenceIsPast(entry, now)) entries.push(entry);
     }

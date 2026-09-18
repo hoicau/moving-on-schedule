@@ -412,6 +412,70 @@ html[lang='en'] .course-card-top {
 .remark-full {
   white-space: pre-wrap;
 }
+.course-visibility {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding-block: 10px;
+}
+.course-visibility-copy {
+  flex: 1;
+  min-width: 0;
+}
+.course-visibility-copy label {
+  color: var(--text);
+  cursor: pointer;
+  font-size: 12px;
+}
+.course-visibility-copy p {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.7;
+}
+.course-visibility-switch {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  padding: 12px 4px;
+  position: relative;
+  border-radius: 8px;
+}
+.course-visibility-switch::before {
+  content: '';
+  position: absolute;
+  inset: 11px 3px;
+  border-radius: 20px;
+  background: var(--muted);
+}
+.course-visibility-switch span {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  margin-left: 2px;
+  border-radius: 50%;
+  background: white;
+  transition: transform 0.15s;
+}
+.course-visibility-switch[aria-checked='true']::before {
+  background: var(--accent);
+}
+.course-visibility-switch[aria-checked='true'] span {
+  background: var(--accent-ink);
+  transform: translateX(16px);
+}
+.course-visibility-switch:focus-visible {
+  outline: 2px solid var(--muted);
+  outline-offset: 2px;
+}
+.list-course-name .course-hidden-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--muted);
+}
 .list-course-name {
   min-width: 0;
 }
@@ -657,13 +721,6 @@ html[lang='en'] .course-card-top {
 .course-modal .modal-actions > .danger {
   margin-right: auto;
 }
-@media (max-width: 480px) {
-  .course-modal .modal-actions > .danger {
-    flex-basis: 100%;
-    justify-content: flex-start;
-  }
-}
-
 .course-detail-actions,
 .course-modal .modal-actions,
 .settings-modal .modal-actions,

@@ -10,6 +10,7 @@ import { useNow } from './useNow';
 import { useElasticScroll } from './useElasticScroll';
 import { MascotCard } from './MascotCard';
 import { ComingUp } from './ComingUp';
+import { CourseVisibilityToggle } from './CourseVisibilityToggle';
 import { WeekJourney } from './WeekJourney';
 import type { DisplayPreferences } from './displayPreferences';
 import { useUserData } from './UserDataProvider';
@@ -37,6 +38,7 @@ import {
   Clock3,
   Coffee,
   Database,
+  EyeOff,
   FileSpreadsheet,
   FileJson,
   GraduationCap,
@@ -407,6 +409,10 @@ function CourseForm({
             onChange={(e) => update('note', e.target.value)}
           />
         </label>
+        <CourseVisibilityToggle
+          visible={!draft.hidden}
+          onChange={(visible) => update('hidden', !visible)}
+        />
         {collision.length > 0 && (
           <div className="notice warning">
             {t('course.overlaps', {
@@ -427,7 +433,7 @@ function CourseForm({
         <div className="modal-actions">
           {isEditing && course && (
             <button
-              className="text-button danger"
+              className="button danger"
               type="button"
               onClick={() => {
                 if (confirmDelete) onDelete(course.id);
@@ -1269,12 +1275,24 @@ export default function App() {
     );
     setModal(null);
   }
+  function chooseCourseVisibility(course: Course, visible: boolean) {
+    setEditing({ ...course, hidden: !visible });
+    void store.update((current) => ({
+      ...current,
+      schedule: {
+        ...current.schedule,
+        courses: current.schedule.courses.map((entry) =>
+          entry.id === course.id ? { ...entry, hidden: !visible } : entry,
+        ),
+      },
+    }));
+  }
   const matches = (course: Course) =>
     `${course.name} ${course.teacher} ${course.room}`
       .toLowerCase()
       .includes(query.trim().toLowerCase());
-  const weekCourses = courses.filter((c) =>
-    courseOccursInWeek(c, settings, week),
+  const weekCourses = courses.filter(
+    (c) => !c.hidden && courseOccursInWeek(c, settings, week),
   );
   const filtered = weekCourses.filter(matches),
     allFiltered = courses.filter(matches);
@@ -2016,6 +2034,12 @@ export default function App() {
                           </span>
                           <div className="list-course-name">
                             <strong>{c.name}</strong>
+                            {c.hidden && (
+                              <span className="course-hidden-label">
+                                <EyeOff size={12} aria-hidden="true" />
+                                {t('course.hidden')}
+                              </span>
+                            )}
                             {showRemarks && c.note.trim() && (
                               <span className="remark-preview">
                                 {t('course.remark')}: {c.note}
@@ -2076,6 +2100,10 @@ export default function App() {
               </div>
             )}
           </dl>
+          <CourseVisibilityToggle
+            visible={!editing.hidden}
+            onChange={(visible) => chooseCourseVisibility(editing, visible)}
+          />
           {conflicts(editing, courses, settings).length > 0 && (
             <p className="notice warning">
               {t('course.conflictDetails', {

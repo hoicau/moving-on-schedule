@@ -20,6 +20,8 @@ export type Course = {
   weeks: number[];
   color: Color;
   note: string;
+  // Existing schedules omit this field and remain visible.
+  hidden?: boolean;
 } & CourseTiming;
 export type PeriodCourse = Course & {
   start: number;
@@ -295,6 +297,8 @@ export function validateCourse(
     throw new Error(t('ui.weeksMustBeBetween1And', { 0: totalWeeks }));
   if (!COLORS.includes(course.color))
     throw new Error(t('ui.invalidCourseColor'));
+  if ('hidden' in course && typeof course.hidden !== 'boolean')
+    throw new Error(t('ui.invalidCourseDetails'));
   if (
     [course.teacher, course.room, course.note].some(
       (v) => typeof v !== 'string',
