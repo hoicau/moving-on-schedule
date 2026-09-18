@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import type { BuildInfo } from './src/buildInfo.ts';
+import { localFonts } from './build/fonts.ts';
 
 function readBuildInfo(): BuildInfo {
   const { version } = JSON.parse(
@@ -42,6 +43,7 @@ export default defineConfig(() => {
     define: { __APP_BUILD__: JSON.stringify(info) },
     plugins: [
       react(),
+      localFonts(),
       {
         name: 'build-info',
         generateBundle() {

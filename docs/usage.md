@@ -74,6 +74,6 @@ Different browsers, devices, ports and domains have separate storage. To move ev
 
 ## Current scope
 
-The app manages one timetable of recurring weekly classes. Accounts, cloud sync, school-system scraping, push notifications, one-off rescheduling, exams, and multiple timetables are not implemented. Google Fonts is the external font source, with system-font fallback; spreadsheet parsing stays in the browser.
+The app manages one timetable of recurring weekly classes. Accounts, cloud sync, school-system scraping, push notifications, one-off rescheduling, exams, and multiple timetables are not implemented. Production builds serve bundled Plus Jakarta Sans and Noto font subsets from the site itself, with system-font fallback; spreadsheet parsing stays in the browser.
 
 The header language selector and appearance switch share a 40px control height, including on mobile.

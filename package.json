@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 0.0.0.0",
-    "test": "node --import tsx --test --test-isolation=none src/*.test.ts",
+    "test": "node --import tsx --test --test-isolation=none src/*.test.ts build/*.test.ts",
     "format": "prettier --write .",
     "test:e2e": "playwright test"
   },

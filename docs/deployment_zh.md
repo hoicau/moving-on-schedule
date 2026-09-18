@@ -62,15 +62,17 @@ Pages 直接使用 `npm run build` 和 `dist`；Workers 配置用于按钮及 Wo
 
 参考：[Vite on Vercel](https://vercel.com/docs/frameworks/frontend/vite)、[Vite on Netlify](https://docs.netlify.com/build/frameworks/framework-setup-guides/vite/)。
 
-## Cloudflare Fonts
+## 自托管字体
 
-HTML 中的 stylesheet link 为英文和简体中文加载 Noto Sans SC，为繁体中文加载 Noto Sans TC。请保留 `index.html` 中的 Google Fonts `<link>`；Cloudflare Fonts 不支持改写 CSS `@import`。
+`npm run build` 会从 Google Fonts 下载 Plus Jakarta Sans、Noto Sans SC 和 Noto Sans TC 的可变字体（字重 400–800）。构建保留 Google 提供的 WOFF2 分片和 `unicode-range` 声明，将带内容 hash 的文件写入 `dist/fonts/`，并将外部 stylesheet 替换为本地文件。浏览器只下载显示文本需要的分片。构建保留上游全部分片，以覆盖导入的课程名等用户内容。
 
-对于 Cloudflare zone 下的域名，在控制台开启 **Speed → Settings → Content Optimization → Cloudflare Fonts**。Cloudflare 会在支持的页面上改写字体定义，通过站点同源地址提供字体文件。仓库配置不会开启此控制台选项，单独部署到 `workers.dev` 或 `pages.dev` 也不会为自定义域名开启它。
+构建环境需要通过 HTTPS 访问 `fonts.googleapis.com` 和 `fonts.gstatic.com`。下载最多并发六个请求，每个请求超时为 30 秒，最多尝试三次。每次 build 都下载上游当前字体，不持久缓存字体。下载失败会使 build 失败。字体二进制文件属于构建产物，不提交到 Git；`public/fonts/` 中的 SIL Open Font License 声明会随字体一起进入构建产物。
 
-部署后检查浏览器 Network 面板，确认字体请求使用站点同源地址。本地预览、其他托管平台，以及 Cloudflare 无法转换的页面仍直接使用 Google Fonts；Web 字体无法加载时回退到系统 sans-serif。Cloudflare Fonts 与 APO 不兼容。
+生产构建和 `npm run preview` 在各托管平台均从站点同源地址加载字体，无需开启 Cloudflare Fonts。`npm run dev` 仍直接使用 Google Fonts；Web 字体无法加载时回退到系统 sans-serif。
 
-参考：[Cloudflare Fonts](https://developers.cloudflare.com/speed/optimization/content/fonts/)。
+部署后检查浏览器 Network 面板：字体请求应指向本站的 `fonts/` 目录，不应请求 Google Fonts。拉丁字符使用 Plus Jakarta Sans，简体和繁体中文字符分别使用 Noto Sans SC 和 Noto Sans TC。切换三种界面语言，确认字体均可加载。
+
+参考：[Google Fonts 的 WOFF2 与 unicode-range 分片](https://developers.googleblog.com/smaller-fonts-with-woff-20-and-unicode-range/)。
 
 ## 页脚备案信息
 

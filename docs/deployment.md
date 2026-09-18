@@ -62,15 +62,17 @@ Both support automatic Git deployments and custom domains. The current app has n
 
 References: [Vite on Vercel](https://vercel.com/docs/frameworks/frontend/vite), [Vite on Netlify](https://docs.netlify.com/build/frameworks/framework-setup-guides/vite/).
 
-## Cloudflare Fonts
+## Self-hosted fonts
 
-The HTML stylesheet link loads Noto Sans SC for English and Simplified Chinese, and Noto Sans TC for Traditional Chinese. Keep it as a Google Fonts `<link>` in `index.html`; Cloudflare Fonts does not rewrite CSS `@import` rules.
+`npm run build` downloads the variable Plus Jakarta Sans, Noto Sans SC, and Noto Sans TC fonts (weights 400–800) from Google Fonts. The build preserves Google's WOFF2 subsets and `unicode-range` declarations, writes content-hashed files under `dist/fonts/`, and replaces the external stylesheet with a local one. Browsers download only the subsets needed for the displayed text. All upstream subsets are retained so imported course names and other user content remain covered.
 
-For a domain in your Cloudflare zone, enable **Speed → Settings → Content Optimization → Cloudflare Fonts**. On supported pages, Cloudflare rewrites the font definitions and serves the font files from your site's origin. The repository configuration does not enable this dashboard setting, and a `workers.dev` or `pages.dev` deployment alone does not enable it for your custom domain.
+The build environment needs HTTPS access to `fonts.googleapis.com` and `fonts.gstatic.com`. Downloads use six concurrent workers, a 30-second timeout per request, and up to three attempts. Every build downloads the current upstream fonts; there is no persistent font cache. A failed download fails the build. Font binaries are generated assets and are not committed to Git. The SIL Open Font License notices in `public/fonts/` are copied into the output alongside the fonts.
 
-After deploying, check the browser Network panel to confirm that font requests use your own origin. Local previews, other hosting providers, and pages Cloudflare cannot transform use Google Fonts directly; system sans-serif remains the fallback when web fonts are unavailable. Cloudflare Fonts is not compatible with APO.
+Production builds and `npm run preview` serve fonts from the site's origin on every hosting platform. Cloudflare Fonts is no longer required. `npm run dev` still uses Google Fonts directly; system sans-serif remains the fallback when web fonts are unavailable.
 
-Reference: [Cloudflare Fonts](https://developers.cloudflare.com/speed/optimization/content/fonts/).
+After deploying, check the browser Network panel: font requests should point to your site's `fonts/` directory, with no requests to Google Fonts. Plus Jakarta Sans renders Latin text; Noto Sans SC and Noto Sans TC provide Simplified and Traditional Chinese glyphs respectively. Switch between all three interface languages to check font loading.
+
+Reference: [Google Fonts WOFF2 and unicode-range subsets](https://developers.googleblog.com/smaller-fonts-with-woff-20-and-unicode-range/).
 
 ## Footer filing information
 
