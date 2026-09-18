@@ -7,6 +7,7 @@ import {
   recentCourses,
 } from './occurrences';
 import { useNow } from './useNow';
+import { useElasticScroll } from './useElasticScroll';
 import { MascotCard } from './MascotCard';
 import { ComingUp } from './ComingUp';
 import { WeekJourney } from './WeekJourney';
@@ -1146,6 +1147,7 @@ function CourseCard({
 }
 
 export default function App() {
+  useElasticScroll();
   const { t, locale, days: DAYS, date: formatDate, chooseLocale } = useI18n();
   const { preference, chooseTheme } = useTheme();
   const { data: userData, status, dirty, canExport, store } = useUserData();

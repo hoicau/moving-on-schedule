@@ -26,7 +26,7 @@
   width: 0;
   height: 0;
 }
-/* Only scroll areas contain boundary gestures; decorative clips pass them on. */
+/* Native overscroll stays off so the custom feedback can enforce its pixel cap. */
 html,
 body,
 .sidebar,
@@ -36,6 +36,21 @@ body,
 .upcoming-entries,
 .mascot-card {
   overscroll-behavior: none;
+}
+[data-elastic-state] > * {
+  translate: var(--elastic-x, 0px) var(--elastic-y, 0px);
+}
+.upcoming-entries[data-elastic-state] {
+  /* Snap targets must stay still while their contents provide edge feedback. */
+  scroll-snap-type: none;
+}
+[data-elastic-state='returning'] > * {
+  transition: translate 240ms cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-elastic-state] > * {
+    translate: none;
+  }
 }
 body {
   margin: 0;

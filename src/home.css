@@ -742,6 +742,9 @@ html[lang='en'] .course-card-top {
   position: relative;
   z-index: 1;
 }
+.course-card.is-past > * {
+  color: color-mix(in srgb, currentColor 78%, #000);
+}
 .course-card.is-past::after {
   z-index: 0;
 }
